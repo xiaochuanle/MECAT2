@@ -1,0 +1,10 @@
+export PATH=$PATH:/share/home/chuanlex/chenying/test/mecat_test/MECATV2/Linux-amd64/bin
+export PATH=$PATH:/share/home/chuanlex/chenying/test/mecat_test/MECATV2/scripts
+
+mecat2pw -j 0 -d ecoli_p6_25x.filtered.fastq -o cns_pm.can -w cns_pm_dir -t 20
+mecat2cns -x 0 -i 0 -t 20 -r 0.6 -a 1000 -c 4 -l 2000 cns_pm.can ecoli_p6_25x.filtered.fastq cns_reads.fasta
+extract_sequences cns_reads.fasta L40 4800000 40
+v2trim.sh trim_dir L40.fasta 20
+
+final reads: trim_dir/trimReads.fasta
+final results: trim_dir/asm_pm.m4
