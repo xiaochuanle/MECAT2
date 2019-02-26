@@ -7,7 +7,7 @@
 
 static const int kDefaultNumThreads = 1;
 static const int kDefaultNumCandidates = 100;
-static const int kDefaultAlignSizePacbio = 2000;
+static const int kDefaultAlignSizePacbio = 1000;
 static const int kDefaultAlignSizeNanopore = 500;
 static const int kDefaultKmerMatchPacbio = 3;
 static const int kDefaultKmerMatchNanopore = 2;
@@ -24,7 +24,7 @@ print_options(options_t* options)
 	LOG(stderr, "min align size\t%d", options->min_align_size);
 	LOG(stderr, "min block score\t%d", options->min_kmer_match);
 	LOG(stderr, "output gapped start\t%c", options->output_gapped_start_point ? 'Y' : 'N'); 
-	//LOG(stderr, "tech\t%d", options->tech);
+	///LOG(stderr, "tech\t%d", options->tech);
 }
 
 void
@@ -67,7 +67,7 @@ void print_usage(const char* prog)
 	fprintf(stderr, "-k <integer>\tminimum number of kmer match a matched block has\n\t\t");
 	fprintf(stderr, "Default: %d\n", kDefaultKmerMatchPacbio);
 	fprintf(stderr, "-g <0/1>\twhether print gapped extension start point, 0 = no, 1 = yes\n\t\tDefault: 0\n");
-	//fprintf(stderr, "-x <0/x>\tsequencing technology: 0 = pacbio, 1 = nanopore\n\t\tDefault: 0\n");
+	///fprintf(stderr, "-x <0/x>\tsequencing technology: 0 = pacbio, 1 = nanopore\n\t\tDefault: 0\n");
 }
 
 int

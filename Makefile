@@ -6,16 +6,11 @@ ifeq (${MACHINE_TYPE}, x86_64)
 endif
 BUILD_DIR	:= ${PWD}/${OS_TYPE}-${MACHINE_TYPE}/bin
 
-all: extractSequences mecat
-
-extractSequences: 
-	cd extract_sequences && make
+.PHONY: all clean
+all: mecat
 
 mecat:
 	cd src && make
 
-.PHONY: clean
 clean:
-	cd extract_sequences && make clean
 	cd src && make clean
-	

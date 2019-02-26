@@ -55,10 +55,12 @@ consensus_one_partition_m4(const char* m4_file_name,
     ConsensusThreadData* pctds[rco.num_threads];
 	build_cns_thrd_data_can(ec_list, num_ec, min_read_id, max_read_id, &rco, &reads, &out, pctds);
     pthread_t thread_ids[rco.num_threads];
-    for (int i = 0; i < rco.num_threads; ++i)
+    for (int i = 0; i < rco.num_threads; ++i) {
         pthread_create(&thread_ids[i], NULL, reads_correction_func_m4, static_cast<void*>(pctds[i]));
-    for (int i = 0; i < rco.num_threads; ++i)
+	}
+    for (int i = 0; i < rco.num_threads; ++i) {
         pthread_join(thread_ids[i], NULL);
+	}
 	for (int i = 0; i < rco.num_threads; ++i)
 	{
 		std::vector<CnsResult>& cns_results = pctds[i]->cns_results;
@@ -83,7 +85,7 @@ int reads_correction_m4(ReadsCorrectionOptions& rco)
 	std::vector<PartitionFileInfo> partition_file_vec;
 	load_partition_files_info(idx_file_name.c_str(), partition_file_vec);
 	PackedDB reads;
-	reads.load_fasta_db(rco.reads);
+	reads.load_fasta_db(rco.reads, MAX_SEQ_SIZE);
 	std::ofstream out;
 	open_fstream(out, rco.corrected_reads, std::ios::out);
 	char process_info[1024];

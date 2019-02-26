@@ -144,7 +144,7 @@ public:
     void load_packed_db(const char* path);
 	
 	static void pack_fasta_db(const char* fasta, const char* output_prefix, const idx_t min_size);
-	void load_fasta_db(const char* fasta);
+	void load_fasta_db(const char* fasta, const int max_seq_size);
 
 private:
     u1_t*   pac;

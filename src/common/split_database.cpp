@@ -235,6 +235,7 @@ split_raw_dataset(const char* reads, const char* wrk_dir)
 	{
 		idx_t rsize = fr.read_one_seq(read);
 		if (rsize == -1) break;
+		if (rsize > MAX_SEQ_SIZE) continue;
 		++num_reads;
 		num_nucls += rsize;
 		if (v->curr + rsize + 1 > MCS)
@@ -263,62 +264,6 @@ split_raw_dataset(const char* reads, const char* wrk_dir)
 	delete_volume_t(v);
 	LOG(stderr, "split \'%s\' (%lld reads, %lld nucls) into %d volumes.", reads, (long long)num_reads, (long long)num_nucls, vol);
 	return vol;
-}
-
-void
-split_dataset(const char* reads, const char* wrk_dir, int* num_vols)
-{
-	string name;
-	PackedDB::generate_idx_name(reads, name);
-	ifstream in_idx_file;
-	open_fstream(in_idx_file, name.c_str(), ios::in);
-	ifstream pac_file;
-	PackedDB::generate_pac_name(reads, name);
-	open_fstream(pac_file, name.c_str(), ios::in | ios::binary);
-	u1_t* buffer;
-	char* seq;
-	safe_malloc(buffer, u1_t, MAX_SEQ_SIZE);
-	safe_malloc(seq, char, MAX_SEQ_SIZE);
-	volume_t* v = new_volume_t(0, 0);
-	int vol = 0;
-	int rid = 0;
-	char idx_file_name[1024], vol_file_name[1024];
-	generate_idx_file_name(wrk_dir, idx_file_name);
-	FILE* idx_file = fopen(idx_file_name, "w");
-	PackedDB::SeqIndex si;
-	while (in_idx_file >> si.id >> si.offset >> si.size)
-	{
-		if (v->curr + si.size + 1 > MCS)
-		{
-			v->start_read_id = rid;
-			rid += v->num_reads;
-			generate_vol_file_name(wrk_dir, vol++, vol_file_name);
-			fprintf(idx_file, "%s\n", vol_file_name);
-			dump_volume(vol_file_name, v);
-			clear_volume_t(v);
-		}
-		extract_one_seq(pac_file, si, buffer, seq);
-		add_one_seq(v, seq, si.size);
-		++v->curr;
-	}
-	
-	if (v->curr > 0)
-	{
-		v->start_read_id = rid;
-		rid += v->num_reads;
-		generate_vol_file_name(wrk_dir, vol++, vol_file_name);
-		fprintf(idx_file, "%s\n", vol_file_name);
-		dump_volume(vol_file_name, v);
-		clear_volume_t(v);
-	}
-	
-	fclose(idx_file);
-	safe_free(buffer);
-	safe_free(seq);
-	delete_volume_t(v);
-	*num_vols = vol;
-	close_fstream(pac_file);
-	close_fstream(in_idx_file);
 }
 
 volume_names_t*

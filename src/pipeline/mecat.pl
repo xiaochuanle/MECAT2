@@ -18,9 +18,9 @@ sub defaultConfig() {
         MIN_READ_LENGTH=>500,
         CNS_OVLP_OPTIONS=>"",
         CNS_OPTIONS=>"-r 0.6 -a 1000 -c 4 -l 2000",
+        CNS_OUTPUT_COVERAGE=>30,
         TRIM_OVLP_OPTIONS=>"-B",
         ASM_OVLP_OPTIONS=>"-n 100 -z 10 -b 2000 -e 0.5 -j 1 -u 0 -a 400",
-        CNS_OUTPUT_COVERAGE=>30,
         CLEANUP=>0,
         USE_GRID=>"false",
         GRID_NODE=>0,
@@ -74,18 +74,61 @@ sub runCorrectRawreads($$) {
     my $cnsOvlpOptions = %$cfg{'CNS_OVLP_OPTIONS'};
     my $cnsOptions = %$cfg{'CNS_OPTIONS'};
    
-    my $job = Job->new(
-        name => "1-cns_rawreads",
+    #my $job = Job->new(
+    #    name => "cns_rawreads",
+    #    ifiles => [$rawreads],
+    #    ofiles => ["$workDir/cns_final.fasta"],
+    #    gfiles => ["$workDir/cns_final.fasta", "$workDir/cns_reads.fasta", "$workDir/cns_pm*"],
+    #    mfiles => ["$workDir/cns_pm*", "$workDir/cns_reads.fasta", "$workDir/cns_final.fasta.qual", 
+    #               "$workDir/cns_final.fasta.qv", "$workDir/cns_final.frg"],
+    #    cmds => ["$binPath/mecat2pw -j 0 -d $rawreads -o $workDir/cns_pm.can -w $workDir/cns_pm_dir -t $thread $cnsOvlpOptions",
+    #             "$binPath/mecat2cns -i 0 -t $thread $cnsOptions $workDir/cns_pm.can $rawreads $workDir/cns_reads.fasta",
+    #             "$binPath/extract_sequences $workDir/cns_reads.fasta $workDir/cns_final $genomeSize $coverage"],
+    #    msg => "correcting rawreads",
+    #);
+
+    
+    my $jobPw = Job->new(
+        name => "cns_pw",
+        ifiles => [$rawreads],
+        ofiles => ["$workDir/cns_pm.can"],
+        gfiles => ["$workDir/cns_pm*"],
+        mfiles => [],
+        cmds => ["$binPath/mecat2pw -j 0 -d $rawreads -o $workDir/cns_pm.can -w $workDir/cns_pm_dir -t $thread $cnsOvlpOptions"],
+        msg => "correcting rawreads step 1 mecat2pw",
+    );
+
+    my $jobCns = Job->new(
+        name => "cns_cns",
+        ifiles => ["$workDir/cns_pm.can"],
+        ofiles => ["$workDir/cns_reads.fasta"],
+        gfiles => ["$workDir/cns_reads.fasta"],
+        mfiles => [],
+        cmds => ["$binPath/mecat2cns -i 0 -t $thread $cnsOptions $workDir/cns_pm.can $rawreads $workDir/cns_reads.fasta"],
+        msg => "correcting rawreads step 2 mecat2cns",
+    );
+
+    my $jobExtr = Job->new(
+        name => "cns_extract",
+        ifiles => ["$workDir/cns_reads.fasta"],
+        ofiles => ["$workDir/cns_final.fasta"],
+        gfiles => ["$workDir/cns_final.fasta"],
+        mfiles => [],
+        #cmds => ["$binPath/extract_sequences $workDir/cns_reads.fasta $workDir/cns_final $genomeSize $coverage"],
+        cmds => ["$binPath/mecat2elr $workDir/cns_reads.fasta $genomeSize $coverage $workDir/cns_final.fasta"],
+        msg => "correcting rawreads step 3 extract_sequences",
+    );
+
+    my $job = Job->new (
+        name => "cns_job",
         ifiles => [$rawreads],
         ofiles => ["$workDir/cns_final.fasta"],
-        gfiles => ["$workDir/cns_final.fasta", "$workDir/cns_reads.fasta", "$workDir/cns_pm*"],
         mfiles => ["$workDir/cns_pm*", "$workDir/cns_reads.fasta", "$workDir/cns_final.fasta.qual", 
                    "$workDir/cns_final.fasta.qv", "$workDir/cns_final.frg"],
-        cmds => ["$binPath/mecat2pw -j 0 -d $rawreads -o $workDir/cns_pm.can -w $workDir/cns_pm_dir -t $thread $cnsOvlpOptions",
-                 "$binPath/mecat2cns -x 0 -i 0 -t $thread $cnsOptions $workDir/cns_pm.can $rawreads $workDir/cns_reads.fasta",
-                 "$binPath/extract_sequences $workDir/cns_reads.fasta $workDir/cns_final $genomeSize $coverage"],
+        jobs => [$jobPw, $jobCns, $jobExtr],        
         msg => "correcting rawreads",
     );
+    
     serialRunJobs($env, $cfg, $job);
 }
 
@@ -107,7 +150,7 @@ sub runTrimReads($$) {
     my $thread = %$cfg{"THREADS"};
 
     my $jobMkVol = Job->new(
-        name => "2-tr_mk_vol",
+        name => "tr_mk_vol",
         ifiles => [$cnsReads],
         ofiles => ["$volDir/num_volumes.txt"],
         gfiles => ["$volDir/num_volumes.txt"],
@@ -126,7 +169,7 @@ sub runTrimReads($$) {
             for (my $i=0; $i<$count; $i=$i+1) {
                 my $id = $i + 1;
                 my $jobSub = Job->new(
-                    name => "2-tr_al_vol_$i", 
+                    name => "tr_al_vol_$i", 
                     ifiles => ["$volDir/num_volumes.txt"],
                     ofiles => ["$volDir/pm_$id.m4"],
                     gfiles => ["$volDir/pm_$id.m4"],
@@ -140,7 +183,7 @@ sub runTrimReads($$) {
                 push @{$job->ofiles}, "$volDir/pm_$id.m4";
             }
         },
-        name => "2-tr_al_vol",
+        name => "tr_al_vol",
         ifiles => ["$volDir/num_volumes.txt"],
         ofiles => [],   # prefunc
         mfiles => [],
@@ -157,7 +200,7 @@ sub runTrimReads($$) {
             $job->cmds(["cat $subPmStr  > $trimPm"]);
 
         },
-        name => "2-tr_cat_vol",
+        name => "tr_cat_vol",
         ifiles => [],   # prefunc
         ofiles => [$trimPm],
         gfiles => [$trimPm],
@@ -171,7 +214,7 @@ sub runTrimReads($$) {
     my $srResult = "$workDir/sr.txt";
 
     my $jobTrimCore = Job-> new (
-        name => "2-tr_trim_read",
+        name => "tr_trim_read",
         ifiles => [$cnsReads, $trimPm],
         ofiles => [$trimReads],
         gfiles => [$trimReads],
@@ -184,7 +227,7 @@ sub runTrimReads($$) {
     );
 
     my $job = Job->new (
-        name => "2-trim_reads",
+        name => "tr_job",
         ifiles => [$cnsReads],
         ofiles => [$trimReads],
         mfiles => ["$volDir/trimReads_*.fasta", $volDir],
@@ -213,7 +256,7 @@ sub runAlignTReads($$) {
     my $thread = %$cfg{"THREADS"};
 
     my $jobMkVol = Job->new(
-        name => "3-al_mk_vol",
+        name => "altr_mk_vol",
         ifiles => [$trimReads],
         ofiles => ["$volDir/num_volumes.txt"],
         gfiles => ["$volDir/num_volumes.txt"],
@@ -230,7 +273,7 @@ sub runAlignTReads($$) {
             for (my $i=0; $i<$count; $i=$i+1) {
                 my $id = $i + 1;
                 my $jobSub = Job->new(
-                    name => "3-al_al_vol_$i", 
+                    name => "altr_al_vol_$i", 
                     ifiles => ["$volDir/num_volumes.txt"],
                     ofiles => ["$volDir/pm_$id.m4"],
                     gfiles => ["$volDir/pm_$id.m4"],
@@ -244,7 +287,7 @@ sub runAlignTReads($$) {
             }
 
         },
-        name => "3-al_al_vol",
+        name => "altr_al_vol",
         ifiles => ["$volDir/num_volumes.txt"],
         ofiles => [],   # prefunc
         mfiles => [],
@@ -260,7 +303,7 @@ sub runAlignTReads($$) {
             $job->cmds(["cat $subPmStr  > $asmPm"]);
         },
 
-        name => "3-al_cat_vol",
+        name => "altr_cat_vol",
         ifiles => [],   # prefunc
         ofiles => [$asmPm],
         gfiles => [$asmPm],
@@ -270,7 +313,7 @@ sub runAlignTReads($$) {
     );
     
     my $job = Job->new (
-        name => "3-align_tr_reads",
+        name => "altr_job",
         ifiles => [$trimReads],
         ofiles => [$asmPm],
         mfiles => [$volDir],
@@ -303,7 +346,7 @@ sub runAssemble($$) {
     my $assembleOptions = %$cfg{"FSA_ASSEMBLE_OPTIONS"};
 
     my $job = Job->new(
-        name => "4-assemble",
+        name => "ass_job",
         ifiles => [$overlaps, $reads],
         ofiles => [$filtered_overlaps, $contigs],
         gfiles => [$filtered_overlaps, $contigs],
@@ -371,7 +414,7 @@ sub cmdConfig($) {
     my %cfg = defaultConfig();
 
     my @items = ("PROJECT", "RAWREADS", "GENOME_SIZE", "THREADS", "MIN_READ_LENGTH", 
-                 "CNS_OVLP_OPTIONS", "CNS_OPTIONS", "TRIM_OVLP_OPTIONS", "ASM_OVLP_OPTIONS", 
+                 "CNS_OVLP_OPTIONS", "CNS_OPTIONS", "CNS_OUTPUT_COVERAGE", "TRIM_OVLP_OPTIONS", "ASM_OVLP_OPTIONS", 
                  "FSA_OL_FILTER_OPTIONS", "FSA_ASSEMBLE_OPTIONS" );
 
     open(F, "> $fname") or die; 

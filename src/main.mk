@@ -31,6 +31,7 @@ SUBMAKEFILES := mecat2pw/pw.mk \
 		./mecat2asm/v2trim/largest_cover_range_main.mk \
 		./mecat2asm/v2trim/split_reads_main.mk \
 		./mecat2asm/v2trim/trim_bases.mk \
+		./mecat2asm/v2elr/extract_sequences.mk \
 		./fsa/fsa.mk	\
 		./fsa/filter.mk \
 		./fsa/assemble.mk \

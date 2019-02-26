@@ -65,7 +65,7 @@ void print_usage()
 	fprintf(stderr, "-n <integer>\tnumber of of candidates for gap extension\n\t\tdefault: %d\n", kDefaultNumCandidates);
 	fprintf(stderr, "-b <integer>\toutput the best b alignments\n\t\tdefault: %d\n", kDefaultNumOutput);
 	fprintf(stderr, "-m <0/1/2>\toutput format: 0 = ref, 1 = m4, 2 = sam\n\t\tdefault: %d\n", kDefaultOutputFormat);
-	//fprintf(stderr, "-x <0/1>\tsequencing technology: 0 = pacbio, 1 = nanopore\n\t\tdefault: %d\n", kDefaultTech);
+	///fprintf(stderr, "-x <0/1>\tsequencing technology: 0 = pacbio, 1 = nanopore\n\t\tdefault: %d\n", kDefaultTech);
 }
 
 int
@@ -77,7 +77,7 @@ param_read_t(int argc, char* argv[], meap_ref_options* options)
 	int ret = 1;
 	
 	init_meap_ref_options(options);
-	while((opt_char = getopt(argc, argv, "d:r:w:o:t:n:b:m:")) != -1)
+	while((opt_char = getopt(argc, argv, "d:r:w:o:t:n:b:m:x:")) != -1)
 	{
 		switch(opt_char)
 		{

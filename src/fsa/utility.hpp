@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include <cassert>
 #include <algorithm>
+#include <numeric>
 
 template<typename T>
 auto SplitConstIterater(size_t sz, const T& container) -> std::vector<std::array<typename T::const_iterator, 2>> {

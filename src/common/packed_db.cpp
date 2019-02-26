@@ -191,7 +191,7 @@ void PackedDB::add_one_seq(const char* seq, const idx_t size)
 	}
 }
 
-void PackedDB::load_fasta_db(const char* dbname)
+void PackedDB::load_fasta_db(const char* dbname, const int max_seq_size)
 {
 	DynamicTimer dtimer(__func__);
 	FastaReader freader(dbname);
@@ -199,6 +199,7 @@ void PackedDB::load_fasta_db(const char* dbname)
 	while (1)
 	{
 		idx_t size = freader.read_one_seq(seq);
+		if (size > max_seq_size) continue;
 		if (size == -1) break;
 		add_one_seq(seq);
 	}

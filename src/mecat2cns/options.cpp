@@ -113,14 +113,8 @@ print_usage(const char* prog)
 	
 	cerr << "-" << usage_n << "\t\t" << "print usage info." << "\n";
 	
-	///cerr << "\n"
-	///	 << "If 'x' is set to be '0' (pacbio), then the other options have the following default values: \n";
-	cerr << "Default Options:\n";
+	cerr << "\nDefault Options:\n";
 	print_pacbio_default_options();
-	
-	///cerr << "\n"
-	///	 << "If 'x' is set to be '1' (nanopore), then the other options have the following default values: \n";
-	///print_nanopore_default_options();
 }
 
 ConsensusOptions
@@ -300,5 +294,5 @@ print_options(ConsensusOptions& t)
 	cout << "cov:\t" << t.min_cov << "\n";
 	cout << "min size:\t" << t.min_size << "\n";
 	cout << "partition files:\t" << t.num_partition_files << "\n";
-	cout << "tech:\t" << t.tech << "\n";
+	///cout << "tech:\t" << t.tech << "\n";
 }

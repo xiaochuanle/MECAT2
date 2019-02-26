@@ -137,16 +137,8 @@ static void creat_ref_index(char *fastafile)
     long length,count,i,start, rsize = 0;
     FILE *fasta,*fastaindex;
     char *seq,ch,nameall[200];
-    //
-    if(seed_len==14)indexcount=268435456;
-    else if(seed_len==13)indexcount=67108864;
-    else if(seed_len==12)indexcount=16777216;
-    else if(seed_len==11)indexcount=4194304;
-    else if(seed_len==10)indexcount=1048576;
-    else if(seed_len==9)indexcount=262144;
-    else if(seed_len==8)indexcount=65536;
-    else if(seed_len==7)indexcount=16384;
-    else if(seed_len==6)indexcount=4096;
+
+	indexcount = 1 << (2 * seed_len);
     leftnum=34-2*seed_len;
     //read reference seq
     length=get_file_size(fastafile);

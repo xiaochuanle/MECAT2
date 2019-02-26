@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <list>
 #include <iostream>
+#include <cmath>
 
 void test_load(const std::string &fname) {
     std::ifstream in(fname);

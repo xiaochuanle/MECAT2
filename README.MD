@@ -20,12 +20,12 @@
 
 MECAT2 is an improved version of  [MECAT](https://github.com/xiaochuanle/MECAT). It is an ultra-fast and accurate Mapping, Error Correction and de novo Assembly Tools for single molecula sequencing (SMRT) reads. MECAT2 powers following improvements over MECAT:
 
-* All modules in MECAT2 are developed by ourselves for future maintenance.
+* All modules in MECAT2 are developed by ourselves for easy maintenance.
 * MECAT2 can be parallel to multiple nodes.
 * Many bugs in MECAT have been fixed.
 * To improve the mapping  efficiency, the default length of kmers is set to 15 (13 in MECAT).
 * The default parameters in `mecat2cns` are relexed so that MECAT2 also works well for low coverage datasets.
-* A new assembly module `fsa`, which is based on [string graph](https://academic.oup.com/bioinformatics/article/21/suppl_2/ii79/227189), is used for replacing the original assembly tool `mecat2canu`, because many unchangeable bugs in MECAT are from `mecat2canu`.
+* A new assembly module `fsa`, which is based on [string graph](https://academic.oup.com/bioinformatics/article/21/suppl_2/ii79/227189), is used for replacing the original assembly tool `mecat2canu`.
 
 
 MECAT2 consists of four modules:
@@ -41,15 +41,17 @@ MECAT2 consists of four modules:
 
 MECAT2 is written in C, C++, and perl. It is open source and distributed under the [GPLv3](http://www.gnu.org/licenses/gpl-3.0.html) license.
 
-** Please note that MECAT2 no longer supports Nanopore raw reads. We have developed a Mapping, Error Correction and de novo Assembly Pipeline specifically for Nanopore Raw Reads `NECAT`, which will be released very soon.**
+**Please note that MECAT2 no longer supports Nanopore raw reads. We have developed a Mapping, Error Correction and de novo Assembly Pipeline specifically for Nanopore Raw Reads `NECAT`, which will be released very soon.**
 
 
 
 # <a name="S-installation"></a>Installation
 
+We have tested `MECAT2` on CentOS release 7.3 and on Ubuntu 18.04.
+
 * Step 1: Figure out where to install `MECAT2`.
 We will install `MECAT2` and two other auxiliary tools `HDF5` and `dextract`. We first identify the directory in which we want to install them. As an example, I will install them in the directory `/home/chenying/smrt_asm`. So I first create this directory using the `mkdir` command and go to that directory:
-(** The dollar sign `$` that preceeds the input is the promt that printed by the shell **)
+(**The dollar sign `$` that preceeds the input is the promt that printed by the shell **)
 ``` shell
 $ mkdir -p /home/chenying/smrt_asm
 $ cd /home/chenying/smrt_asm
@@ -88,12 +90,10 @@ The header files of `HDF5` are put in `${MECAT_PATH}/hdf5/include`. The library 
 
 * Step 4:  Install `dextract`
 ``` shell
-$ git clone https://github.com/PacificBiosciences/DEXTRACTOR.git
-$ cp MECAT/dextract_makefile DEXTRACTOR
 $ cd DEXTRACTOR
 $ export HDF5_INCLUDE=${MECAT_PATH}/hdf5/include
 $ export HDF5_LIB=${MECAT_PATH}/hdf5/lib
-$ make -f dextract_makefile
+$ make
 $ cd ..
 ```
 
@@ -512,15 +512,15 @@ where
 
 by effective position we mean the position in the original sequence that is covered by at least `c` (the argument to the option `-c`) reads.
 
-## <a name="SS-Extract longest correted reads"></a> `extract_sequences`
+## <a name="SS-Extract longest correted reads"></a> `mecat2elr`
 
 
 
-`extract_sequences` is used by `mecat.pl` for  extracting 30X longest sequences from the corrected data. The command is
+`mecat2elr` is used by `mecat.pl` for  extracting 30X longest sequences from the corrected data. The command is
 
 ``` shell
 
-extract_sequences [the input fasta file from mecat2cns] [the output filename] [genome size]  [coverage]
+mecat2elr [the input fasta file from mecat2cns] [genome size]  [coverage] [the output filename]
 
 ```
 

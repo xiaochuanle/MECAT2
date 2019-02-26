@@ -165,7 +165,8 @@ output_cns_result(std::vector<CnsResult>& cns_results,
 	const size_t BlkSize = MaxSeqSize - OvlpSize - 1000;
 	
 	const size_t size = cns_seq.size();
-	if (size <= MaxSeqSize) {
+	//if (size <= MaxSeqSize) {
+	if (1) {
 		cr.range[0] = beg;
 		cr.range[1] = end;
 		cr.seq = cns_seq;

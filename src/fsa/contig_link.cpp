@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <iostream>
 #include <tuple>
+#include <cmath>
 
 #include "overlap.hpp"
 #include "utility.hpp"

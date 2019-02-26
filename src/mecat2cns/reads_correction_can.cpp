@@ -85,23 +85,47 @@ consensus_one_partition_can(const char* m4_file_name,
     for (int i = 0; i < rco.num_threads; ++i) delete pctds[i];
 }
 
+static void
+partition_can(const char* m4_path, const int batch_size, const int min_size, const int num_partition_files)
+{
+	char job_finished[2048];
+	sprintf(job_finished, "%s.partition_finished", m4_path);
+	if (access(job_finished, F_OK) == 0) {
+		fprintf(stderr, "Partition Candidates Has Been Finished, Skipt It.\n");
+		return;
+	}
+	partition_candidates(m4_path, batch_size, min_size, num_partition_files);
+	FILE* out = fopen(job_finished, "w");
+	fclose(out);
+}
+
 int reads_correction_can(ReadsCorrectionOptions& rco)
 {
-	partition_candidates(rco.m4, rco.batch_size, rco.min_size, rco.num_partition_files);
+	partition_can(rco.m4, rco.batch_size, rco.min_size, rco.num_partition_files);
 	std::string idx_file_name;
 	generate_partition_index_file_name(rco.m4, idx_file_name);
 	std::vector<PartitionFileInfo> partition_file_vec;
 	load_partition_files_info(idx_file_name.c_str(), partition_file_vec);
 	PackedDB reads;
-	reads.load_fasta_db(rco.reads);
+	reads.load_fasta_db(rco.reads, MAX_SEQ_SIZE);
 	std::ofstream out;
 	open_fstream(out, rco.corrected_reads, std::ios::out);
-	char process_info[1024];
+	char process_info[2048];
+	char job_finished[2048];
 	for (std::vector<PartitionFileInfo>::iterator iter = partition_file_vec.begin(); iter != partition_file_vec.end(); ++iter)
 	{
+		sprintf(job_finished, "%s.correction_finished", iter->file_name.c_str());
+		if (access(job_finished, F_OK) == 0) {
+			fprintf(stderr, "Partition %s has been corrected, skip it.\n", iter->file_name.c_str());
+			continue;
+		}
+		
 		sprintf(process_info, "processing %s", iter->file_name.c_str());
 		DynamicTimer dtimer(process_info);
 		consensus_one_partition_can(iter->file_name.c_str(), iter->min_seq_id, iter->max_seq_id, rco, reads, out);
+		
+		FILE* job_finished_out = fopen(job_finished, "w");
+		fclose(job_finished_out);
 	}
 	
 	return 0;
