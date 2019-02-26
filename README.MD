@@ -67,6 +67,13 @@ $ echo ${MECAT_PATH}
 ```
 
 * Step 2:  Install `MECAT2`:
+
+There are two ways to install `MECAT2`. One is to download executable binaries directly:
+```shell
+wget https://github.com/xiaochuanle/MECAT2/releases/download/20192026/mecat2_20190226_linuax_amd64.tar.gz
+tar xzvf mecat2_20190226_linuax_amd64.tar.gz
+```
+Another way is to build from source codes:
 ``` shell
 $ git clone https://github.com/xiaochuanle/MECAT2.git
 $ cd MECAT2
