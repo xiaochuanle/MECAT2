@@ -51,7 +51,7 @@ We have tested `MECAT2` on CentOS release 7.3 and on Ubuntu 18.04.
 
 * Step 1: Figure out where to install `MECAT2`.
 We will install `MECAT2` and two other auxiliary tools `HDF5` and `dextract`. We first identify the directory in which we want to install them. As an example, I will install them in the directory `/home/chenying/smrt_asm`. So I first create this directory using the `mkdir` command and go to that directory:
-(**The dollar sign `$` that preceeds the input is the promt that printed by the shell **)
+(**The dollar sign `$` that preceeds the input is the promt that printed by the shell.**)
 ``` shell
 $ mkdir -p /home/chenying/smrt_asm
 $ cd /home/chenying/smrt_asm
