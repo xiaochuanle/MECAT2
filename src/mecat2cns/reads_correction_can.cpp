@@ -115,15 +115,9 @@ int reads_correction_can(ReadsCorrectionOptions& rco)
 	for (std::vector<PartitionFileInfo>::iterator iter = partition_file_vec.begin(); iter != partition_file_vec.end(); ++iter)
 	{
 		sprintf(job_finished, "%s.correction_finished", iter->file_name.c_str());
-		if (access(job_finished, F_OK) == 0) {
-			fprintf(stderr, "Partition %s has been corrected, skip it.\n", iter->file_name.c_str());
-			continue;
-		}
-		
 		sprintf(process_info, "processing %s", iter->file_name.c_str());
 		DynamicTimer dtimer(process_info);
 		consensus_one_partition_can(iter->file_name.c_str(), iter->min_seq_id, iter->max_seq_id, rco, reads, out);
-		
 		FILE* job_finished_out = fopen(job_finished, "w");
 		fclose(job_finished_out);
 	}

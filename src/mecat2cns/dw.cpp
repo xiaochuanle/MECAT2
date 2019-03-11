@@ -12,8 +12,8 @@ get_sw_parameters_small()
     swp.row_size = 4096;
     swp.column_size = 4096;
     swp.segment_aln_size = 4096;
-    swp.max_seq_size = 100000;
-    swp.max_aln_size = 100000;
+    swp.max_seq_size = MAX_SEQ_SIZE;
+    swp.max_aln_size = MAX_SEQ_SIZE;
     swp.d_path_size = 5000000;
     swp.aln_path_size = 5000000;
 
@@ -28,8 +28,8 @@ get_sw_parameters_large()
     swp.row_size = 4096;
     swp.column_size = 4096;
     swp.segment_aln_size = 4096;
-    swp.max_seq_size = 100000;
-    swp.max_aln_size = 100000;
+    swp.max_seq_size = MAX_SEQ_SIZE;
+    swp.max_aln_size = MAX_SEQ_SIZE;
     swp.d_path_size = 5000000;
     swp.aln_path_size = 5000000;
 
