@@ -41,7 +41,7 @@ MECAT2 consists of four modules:
 
 MECAT2 is written in C, C++, and perl. It is open source and distributed under the [GPLv3](http://www.gnu.org/licenses/gpl-3.0.html) license.
 
-**Please note that MECAT2 no longer supports Nanopore raw reads. We have developed a Mapping, Error Correction and de novo Assembly Pipeline specifically for Nanopore Raw Reads `NECAT`, which will be released very soon.**
+**Please note that MECAT2 no longer supports Nanopore raw reads. We have developed a Mapping, Error Correction and de novo Assembly Pipeline specifically for Nanopore Raw Reads `NECAT`. [follow this link to NECAT](https://github.com/xiaochuanle/NECAT).**
 
 
 
