@@ -171,16 +171,31 @@ Seq::Id ReadStore::Insert(const SeqReader::Item &item, SeqReader *reader, int mo
         items_[it->second].seq = mode == 0 ? item.seq : "";
         items_[it->second].id = item.id;
         items_[it->second].reader = reader;
+        std::transform(items_[it->second].seq.begin(), items_[it->second].seq.end(), items_[it->second].seq.begin(), ::toupper);
         id = it->second;
     } else {
         names_.push_back(item.head);
         items_.push_back(Item(mode == 0 ? item.seq : "", item.id, reader));
+        std::transform(items_.back().seq.begin(), items_.back().seq.end(), items_.back().seq.begin(), ::toupper);
         names_to_ids_[item.head] = (int)names_.size() - 1;
         id = (int)names_.size() - 1;
     }
     
     return id;
 
+}
+
+void ReadStore::LoadItem(Item &item) const {
+    if (item.seq.empty() && item.reader != nullptr) {
+        SeqReader::Item i;
+        auto r = item.reader->Get(item.id, i);
+        if (r) {
+            item.seq = i.seq;
+            std::transform(item.seq.begin(), item.seq.end(), item.seq.begin(), ::toupper);
+        } else {
+            LOG(FATAL)("Failed to load a read");
+        }
+    }
 }
 
 void ReadStore::SaveIdToName(const std::string &fname) const {

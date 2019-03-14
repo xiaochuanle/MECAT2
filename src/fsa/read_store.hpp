@@ -35,15 +35,7 @@ public:
     void LoadFastq(const std::string &fname, int mode=0);
     void LoadFofn(const std::string &fname, int mode=0);
     void LoadTxt(const std::string &fname, int mode=0) { LoadFofn(fname, mode); }
-    void LoadItem(Item &item) const {
-        if (item.seq.empty() && item.reader != nullptr) {
-            SeqReader::Item i;
-            auto r = item.reader->Get(item.id, i);
-            assert(r);
-            if (r)
-                item.seq = i.seq;
-            }
-        }
+    void LoadItem(Item &item) const;
     
 
     const std::unordered_set<Seq::Id>& IdsInFile(const std::string &fname) const;

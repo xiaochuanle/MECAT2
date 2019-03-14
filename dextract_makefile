@@ -1,0 +1,28 @@
+CFLAG = -O3 -Wall -Wextra -Wno-unused-result -fno-strict-aliasing
+CC = gcc
+
+HDF5_LIB ?= .libhdf5.a
+
+all: dextract dexta undexta dexqv undexqv
+
+dextract:
+	#${CC} $(CFLAGS) -I$(HDF5_INCLUDE) -L$(HDF5_LIB) -o dextract dextract.c DB.c QV.c expr.c bax.c sam.c -lhdf5 -lz
+	${CC} $(CFLAGS) -I$(HDF5_INCLUDE) -o dextract dextract.c DB.c QV.c expr.c bax.c sam.c ${HDF5_LIB} -lpthread  -lz -ldl -lm
+
+dexta:
+	${CC} ${CFLAGS} -o dexta dexta.c DB.c QV.c
+
+undexta:
+	${CC} ${CFLAGS} -o undexta undexta.c DB.c QV.c
+
+dexqv:
+	${CC} ${CFLAGS} -o dexqv dexqv.c DB.c QV.c
+
+undexqv:
+	${CC} ${CFLAGS} -o undexqv undexqv.c DB.c QV.c
+
+.PHONY: clean
+clean:
+	rm -f dextract dexta undexta dexqv undexqv
+
+

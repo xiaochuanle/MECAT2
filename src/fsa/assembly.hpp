@@ -27,7 +27,7 @@ struct Options {
     std::string read_file{ "" };         
     std::string output_directory{ "." };
     std::string select_branch{ "no" };
-    int run_mode{ 0 };                    
+    int run_mode{ 4 };                    
     int dump{ 0 };
     std::string overlap_file_type{ "" };
     int thread_size {1};
