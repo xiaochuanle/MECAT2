@@ -70,8 +70,8 @@ $ echo ${MECAT_PATH}
 
 There are two ways to install `MECAT2`. One is to download executable binaries directly:
 ```shell
-wget https://github.com/xiaochuanle/MECAT2/releases/download/20192026/mecat2_20190226_linuax_amd64.tar.gz
-tar xzvf mecat2_20190226_linuax_amd64.tar.gz
+$ wget https://github.com/xiaochuanle/MECAT2/releases/download/20192026/mecat2_20190226_linuax_amd64.tar.gz
+$ tar xzvf mecat2_20190226_linuax_amd64.tar.gz
 ```
 Another way is to build from source codes:
 ``` shell
@@ -82,39 +82,15 @@ $ cd ..
 ```
 After installation, all the executables are found in `${MECAT_PATH}/MECAT/Linux-amd64/bin`. The folder name `Linux-amd64` will vary in operating systems.
 
-* Step 3: Install `HDF5`:
-``` shell
-$ wget https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8/hdf5-1.8.15-patch1/src/hdf5-1.8.15-patch1.tar.gz
-$ tar xzvf hdf5-1.8.15-patch1.tar.gz
-$ mkdir hdf5
-$ cd hdf5-1.8.15-patch1
-$ ./configure --enable-cxx --prefix=${MECAT_PATH}/hdf5
-$ make
-$ make install
-$ cd ..
-```
-The header files of `HDF5` are put in `${MECAT_PATH}/hdf5/include`. The library files of `HDF5` are put in `${MECAT_PATH}/hdf5/lib` (in some systems, they are put in `${MECAT_PATH}/hdf5/lib64`, check it!).
-
-* Step 4:  Install `dextract`
-``` shell
-$ cd DEXTRACTOR
-$ export HDF5_INCLUDE=${MECAT_PATH}/hdf5/include
-$ export HDF5_LIB=${MECAT_PATH}/hdf5/lib
-$ make
-$ cd ..
-```
-
 * Step 5: Add relative pathes
 ``` shell
-$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${MECAT_PATH}/hdf5/lib
 $ export PATH=${MECAT_PATH}/MECAT/Linux-amd64/bin:$PATH
-$ export PATH=${MECAT_PATH}/DEXTRACTOR:$PATH
 ```
 
 
 # <a name="S-quick-start"></a>Quick Start
 
-**Before running `MECAT2`, don't forget to add library and binary paths to `LD_LIBRARY_PATH` and `PATH` (Step 5 of [Installation](#S-installation)).**
+**Before running `MECAT2`, don't forget to add binary paths to `PATH` (Step 5 of [Installation](#S-installation)).**
 
 
 Here we take assemblying the genome of Ecoli as an example, to go through each step in order.  Details of each step are given in the next section.
@@ -593,6 +569,12 @@ Chuan-Le Xiao, Ying Chen, Shang-Qian Xie, Kai-Ning Chen, Yan Wang, Yue Han, Feng
 
 
 # <a name="S-update"></a>`Update Information`
+
+Updates in MECAT2 (20193.14):
+
+* Add some improvements in FSA
+
+* Optimize Install Method
 
 Updates in MECAT2 (2019.2):
 
