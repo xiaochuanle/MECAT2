@@ -82,7 +82,7 @@ $ cd ..
 ```
 After installation, all the executables are found in `${MECAT_PATH}/MECAT/Linux-amd64/bin`. The folder name `Linux-amd64` will vary in operating systems.
 
-* Step 5: Add relative pathes
+* Step 3: Add relative pathes
 ``` shell
 $ export PATH=${MECAT_PATH}/MECAT/Linux-amd64/bin:$PATH
 ```
@@ -90,7 +90,7 @@ $ export PATH=${MECAT_PATH}/MECAT/Linux-amd64/bin:$PATH
 
 # <a name="S-quick-start"></a>Quick Start
 
-**Before running `MECAT2`, don't forget to add binary paths to `PATH` (Step 5 of [Installation](#S-installation)).**
+**Before running `MECAT2`, don't forget to add binary paths to `PATH` (Step 3 of [Installation](#S-installation)).**
 
 
 Here we take assemblying the genome of Ecoli as an example, to go through each step in order.  Details of each step are given in the next section.
