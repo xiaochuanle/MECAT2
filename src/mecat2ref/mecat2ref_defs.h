@@ -13,7 +13,7 @@
 #include <sys/stat.h>
 #include <assert.h>
 
-#define RM 100000
+#define RM 2000000
 #define ZV 1000
 #define ZVS 2000
 #define ZVL 1000L

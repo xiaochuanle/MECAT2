@@ -707,7 +707,8 @@ static void reference_mapping(int threadint)
 {
     int eit;
     int cleave_num,read_len,s_k,loc;
-    int mvalue[10000],*leadarray,loc_flag,flag_end,u_k;
+	int* mvalue = (int*)malloc(sizeof(int) * RM / 10);
+    int *leadarray,loc_flag,flag_end,u_k;
     int count1=0,i,j,k,templong,read_name;
     struct Back_List *database,*temp_spr,*temp_spr1;
     int location_loc[4],repeat_loc,*index_list,*index_spr;
@@ -715,7 +716,9 @@ static void reference_mapping(int threadint)
     int temp_list[200],temp_seedn[200],temp_score[200],start_loc;
     int sci=0,localnum,read_i,read_end,fileid;
     int endnum,ii;
-    char *seq,*onedata,onedata1[RM],onedata2[RM],seq1[2500],seq2[2500],*seq_pr1,*seq_pr2,FR;
+	char* onedata1 = (char*)malloc(RM);
+	char* onedata2 = (char*)malloc(RM);
+    char *seq,*onedata,seq1[2500],seq2[2500],*seq_pr1,*seq_pr2,FR;
     int left_loc,left_loc1,right_loc=0,right_loc1,cc1,canidatenum,loc_seed,loc_list;
     int num1,num2,BC;
     int low,high,mid,seedcount;
@@ -827,6 +830,7 @@ static void reference_mapping(int threadint)
                                 if(temp_spr->score==0||temp_spr->seednum<k+1)
                                 {
                                     loc=++(temp_spr->score);
+									if (temp_spr->score > SM) temp_spr->score = SM;
                                     if(loc<=SM)
                                     {
                                         temp_spr->loczhi[loc-1]=u_k;
@@ -1744,6 +1748,9 @@ static void reference_mapping(int threadint)
     free(index_score);
     free(d_path);
     free(resultstore);
+	free(mvalue);
+	free(onedata1);
+	free(onedata2);
 }
 
 

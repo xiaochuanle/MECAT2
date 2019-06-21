@@ -8,7 +8,7 @@
 
 #include "../v2trim/m4_record.h"
 
-#define RM 100000
+#define RM 2000000
 #define ZV 1000
 #define DN 500
 #define BC 10
@@ -535,7 +535,8 @@ static void dump_m4(FILE* stream, M4Record* m4)
 
 void pairwise_mapping(int threadint){
  int cleave_num,read_len,missreal,s_k;
- int mvalue[50000],*leadarray,loc_flag,flag_end,u_k;
+ int* mvalue = (int*)malloc( sizeof(int) * RM / BC );
+ int *leadarray,loc_flag,flag_end,u_k;
  int count1=0,i,j,k,read_name;
  struct Back_List *database,*temp_spr,*temp_spr1;
  int location_loc[4],repeat_loc,*index_list,*index_spr;
@@ -543,7 +544,9 @@ void pairwise_mapping(int threadint){
  int temp_list[150],temp_seedn[150],temp_score[150],start_loc;
  int endnum,loc_count,missall,ii,eit;
  FILE *out,*fid;
- char tempstr[300],onedata1[RM],onedata2[RM],*onedata,seq1[2500],seq2[2500],*seq_pr1,*seq_pr2,FR,*seq; 
+ char* onedata1 = (char*)malloc(RM);
+ char* onedata2 = (char*)malloc(RM);
+ char tempstr[1000],*onedata,seq1[2500],seq2[2500],*seq_pr1,*seq_pr2,FR,*seq; 
  int sci=0,loc,templong,localnum,read_i,read_end;
  int left_loc,left_loc1,right_loc=0,right_loc1,cc1,readno,fileid,canidatenum,loc_seed,loc_list;
  int length1,gg,num1,num2;
@@ -636,6 +639,7 @@ void pairwise_mapping(int threadint){
                             if(temp_spr->score==0||temp_spr->seednum<k+1)
                             {
                                 loc=++(temp_spr->score);
+								if (temp_spr->score > SM) temp_spr->score = SM;
                                 if(loc<=SM)
                                 {
                                     temp_spr->loczhi[loc-1]=u_k;
@@ -949,7 +953,9 @@ void pairwise_mapping(int threadint){
    free(index_score);
    free(d_path);
    free(resultstore);
-   //printf("xiao");
+   free(mvalue);
+   free(onedata1);
+   free(onedata2);
 }
 
 

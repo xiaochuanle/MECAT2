@@ -266,7 +266,8 @@ static void creat_ref_index(char *fastafile)
 static void reference_mapping(int threadint)
 {
     int cleave_num,read_len;
-    int mvalue[20000],flag_end;
+	int* mvalue = (int*)malloc(sizeof(int) * RM / 10);
+    int flag_end;
     long *leadarray,u_k,s_k,loc;
     int count1=0,i,j,k,templong,read_name;
     struct Back_List *database,*temp_spr,*temp_spr1;
@@ -276,7 +277,9 @@ static void reference_mapping(int threadint)
     int temp_list[200],temp_seedn[200],temp_score[200];
     int localnum,read_i,read_end,fileid;
     int endnum,ii;
-    char *seq,*onedata,onedata1[RM],onedata2[RM],FR;
+	char* onedata1 = (char*)malloc(RM);
+	char* onedata2 = (char*)malloc(RM);
+    char *seq,*onedata,FR;
     int cc1,canidatenum,loc_seed;
     int num1,num2,BC;
     int low,high,mid,seedcount;
@@ -421,6 +424,7 @@ static void reference_mapping(int threadint)
                                 if(temp_spr->score==0||temp_spr->seednum<k+1)
                                 {
                                     loc=++(temp_spr->score);
+									if (temp_spr->score > SM) temp_spr->score = SM;
                                     if(loc<=SM)
                                     {
                                         temp_spr->loczhi[loc-1]=u_k;
@@ -880,6 +884,9 @@ static void reference_mapping(int threadint)
     free(rev_index_list);
     free(rev_index_score);
 	delete[] aln_seqs;
+	free(onedata1);
+	free(onedata2);
+	free(mvalue);
 }
 
 

@@ -265,6 +265,7 @@ seeding(const char* read, const int read_size, ref_index* ridx, SeedingBK* sbk)
 			if (spr->score == 0 || spr->seednum < km + 1)
 			{
 				int loc = ++spr->score;
+				if (spr->score > SM) spr->score = SM;
 				if (loc <= SM) { spr->loczhi[loc - 1] = seg_off; spr->seedno[loc - 1] = km + 1; }
 				else insert_loc(spr, seg_off, km + 1, BC);
 				int s_k;
