@@ -15,15 +15,17 @@ sub defaultConfig() {
         RAWREADS=>"",
         GENOME_SIZE=>"",
         THREADS=>4,
-        MIN_READ_LENGTH=>500,
-        CNS_OVLP_OPTIONS=>"",
-        CNS_OPTIONS=>"-r 0.6 -a 1000 -c 4 -l 2000",
+        MIN_READ_LENGTH=>2000,
+        CNS_OVLP_OPTIONS=>"-kmer_size 13",
+        CNS_PCAN_OPTIONS=>"-p 100000 -k 100",
+        CNS_OPTIONS=>"",
         CNS_OUTPUT_COVERAGE=>30,
-        TRIM_OVLP_OPTIONS=>"-B",
-        ASM_OVLP_OPTIONS=>"-n 100 -z 10 -b 2000 -e 0.5 -j 1 -u 0 -a 400",
+        TRIM_OVLP_OPTIONS=>"-skip_overhang",
+        TRIM_PM4_OPTIONS=>"-p 100000 -k 100",
+        TRIM_LCR_OPTIONS=>"",
+        TRIM_SR_OPTIONS=>"",
+        ASM_OVLP_OPTIONS=>"",
         CLEANUP=>0,
-        USE_GRID=>"false",
-        GRID_NODE=>0,
         FSA_OL_FILTER_OPTIONS=>"--max_overhang=-1 --min_identity=-1",
         FSA_ASSEMBLE_OPTIONS=>"",
     );
@@ -69,63 +71,73 @@ sub runCorrectRawreads($$) {
     
     my $thread = %$cfg{"THREADS"};
     my $genomeSize = %$cfg{"GENOME_SIZE"};
+    my $minReadSize = %$cfg{"MIN_READ_LENGTH"};
     my $coverage = %$cfg{"CNS_OUTPUT_COVERAGE"};
     my $binPath = %$env{"BinPath"};
     my $cnsOvlpOptions = %$cfg{'CNS_OVLP_OPTIONS'};
+    my $cnsPcanOptions = %$cfg{'CNS_PCAN_OPTIONS'};
     my $cnsOptions = %$cfg{'CNS_OPTIONS'};
-   
-    #my $job = Job->new(
-    #    name => "cns_rawreads",
-    #    ifiles => [$rawreads],
-    #    ofiles => ["$workDir/cns_final.fasta"],
-    #    gfiles => ["$workDir/cns_final.fasta", "$workDir/cns_reads.fasta", "$workDir/cns_pm*"],
-    #    mfiles => ["$workDir/cns_pm*", "$workDir/cns_reads.fasta", "$workDir/cns_final.fasta.qual", 
-    #               "$workDir/cns_final.fasta.qv", "$workDir/cns_final.frg"],
-    #    cmds => ["$binPath/mecat2pw -j 0 -d $rawreads -o $workDir/cns_pm.can -w $workDir/cns_pm_dir -t $thread $cnsOvlpOptions",
-    #             "$binPath/mecat2cns -i 0 -t $thread $cnsOptions $workDir/cns_pm.can $rawreads $workDir/cns_reads.fasta",
-    #             "$binPath/extract_sequences $workDir/cns_reads.fasta $workDir/cns_final $genomeSize $coverage"],
-    #    msg => "correcting rawreads",
-    #);
-
     
     my $jobPw = Job->new(
         name => "cns_pw",
         ifiles => [$rawreads],
-        ofiles => ["$workDir/cns_pm.can"],
+        ofiles => ["$workDir/cns_pm.seqidx"],
         gfiles => ["$workDir/cns_pm*"],
         mfiles => [],
-        cmds => ["$binPath/mecat2pw -j 0 -d $rawreads -o $workDir/cns_pm.can -w $workDir/cns_pm_dir -t $thread $cnsOvlpOptions"],
-        msg => "correcting rawreads step 1 mecat2pw",
+        cmds => ["$binPath/mecat2map $cnsOvlpOptions -task pm -outfmt seqidx -num_threads $thread -db_dir $workDir/cns_pm_dir -keep_db -min_query_size $minReadSize -out $workDir/cns_pm.seqidx $rawreads $rawreads"],
+        #cmds => ["$binPath/mecat2pw -j 0 -d $rawreads -o $workDir/cns_pm.can -w $workDir/cns_pm_dir -t $thread $cnsOvlpOptions"],
+        msg => "correcting rawreads step 1 mecat2map",
+    );
+
+    my $jobPcan = Job->new(
+        name => "cns_pcan",
+        ifiles => ["$workDir/cns_pm.seqidx"],
+        ofiles => [],
+        gfiles => [],
+        mfiles => [],
+        cmds   => ["$binPath/mecat2pcan $cnsPcanOptions -t $thread $workDir/cns_pm_dir $workDir/cns_cns_dir $workDir/cns_pm.seqidx"],
+        msg    => "partition correction candidates step 2 mecat2pcan",
     );
 
     my $jobCns = Job->new(
         name => "cns_cns",
-        ifiles => ["$workDir/cns_pm.can"],
-        ofiles => ["$workDir/cns_reads.fasta"],
-        gfiles => ["$workDir/cns_reads.fasta"],
+        ifiles => [],
+        ofiles => [],
+        gfiles => [],
         mfiles => [],
-        cmds => ["$binPath/mecat2cns -i 0 -t $thread $cnsOptions $workDir/cns_pm.can $rawreads $workDir/cns_reads.fasta"],
-        msg => "correcting rawreads step 2 mecat2cns",
+        cmds   => ["$binPath/mecat2cns $cnsOptions -num_threads $thread $workDir/cns_pm_dir $workDir/cns_cns_dir"],
+        #cmds => ["$binPath/mecat2cns -i 0 -t $thread $cnsOptions $workDir/cns_pm.can $rawreads $workDir/cns_reads.fasta"],
+        msg => "correcting rawreads step 3 mecat2cns",
+    );
+
+    my $jobMakeCnsReadList = Job->new(
+        name   => "cns_make_list",
+        ifiles => [],
+        ofiles => [],
+        gfiles => [],
+        mfiles => [],
+        cmds   => ["ls $workDir/cns_cns_dir/p*.cns.fasta > $workDir/cns_reads_list.txt"],
+        msg    => "correcting rawreads step 4 make consensus reads list",
     );
 
     my $jobExtr = Job->new(
         name => "cns_extract",
-        ifiles => ["$workDir/cns_reads.fasta"],
-        ofiles => ["$workDir/cns_final.fasta"],
-        gfiles => ["$workDir/cns_final.fasta"],
+        ifiles => [],
+        ofiles => [],
+        gfiles => [],
         mfiles => [],
         #cmds => ["$binPath/extract_sequences $workDir/cns_reads.fasta $workDir/cns_final $genomeSize $coverage"],
-        cmds => ["$binPath/mecat2elr $workDir/cns_reads.fasta $genomeSize $coverage $workDir/cns_final.fasta"],
-        msg => "correcting rawreads step 3 extract_sequences",
+        #cmds => ["$binPath/mecat2elr $workDir/cns_reads.fasta $genomeSize $coverage $workDir/cns_final.fasta"],
+        cmds   => ["$binPath/mecat2extseqs $genomeSize $coverage $workDir/cns_reads_list.txt > $workDir/cns_final.fasta"],
+        msg => "correcting rawreads step 5 extract_sequences",
     );
 
     my $job = Job->new (
         name => "cns_job",
         ifiles => [$rawreads],
         ofiles => ["$workDir/cns_final.fasta"],
-        mfiles => ["$workDir/cns_pm*", "$workDir/cns_reads.fasta", "$workDir/cns_final.fasta.qual", 
-                   "$workDir/cns_final.fasta.qv", "$workDir/cns_final.frg"],
-        jobs => [$jobPw, $jobCns, $jobExtr],        
+        mfiles => [],
+        jobs => [$jobPw, $jobPcan, $jobCns, $jobMakeCnsReadList, $jobExtr],        
         msg => "correcting rawreads",
     );
     
@@ -141,97 +153,78 @@ sub runTrimReads($$) {
     mkdir $workDir;
     my $volDir = "$workDir/trim_pm_dir";
     mkdir $volDir;
+    my $pm4Dir = "$workDir/trim_pm4_dir";
+    mkdir -p $pm4Dir;
 
     my $cnsReads = "$prjDir/1-consensus/cns_final.fasta";
     my $trimReads = "$prjDir/2-trim_bases/trimReads.fasta"; 
-    my $trimPm = "$volDir/trim_pm.m4";
+    my $trimPm = "$volDir/trim_pm.m4x";
     my $binPath = %$env{"BinPath"};
-    my $options = %$cfg{"TRIM_OVLP_OPTIONS"};
+    my $pmOptions = %$cfg{"TRIM_OVLP_OPTIONS"};
+    my $pm4Options = %$cfg{"TRIM_PM4_OPTIONS"};
+    my $lcrOptions = %$cfg{"TRIM_LCR_OPTIONS"};
+    my $srOptions = %$cfg{"TRIM_SR_OPTIONS"};
     my $thread = %$cfg{"THREADS"};
 
-    my $jobMkVol = Job->new(
-        name => "tr_mk_vol",
-        ifiles => [$cnsReads],
-        ofiles => ["$volDir/num_volumes.txt"],
-        gfiles => ["$volDir/num_volumes.txt"],
+    my $jobPm = Job->new (
+        name   => "tr_pm",
+        ifiles => [],
+        ofiles => [],
+        gfiles => [],
         mfiles => [],
-        cmds => ["$binPath/v2mkvol $volDir $cnsReads"],
-        msg => "making vol for trimming",
+        cmds   => ["$binPath/mecat2map $pmOptions -num_threads $thread -db_dir $volDir -keep_db -task pm -outfmt m4x -out $trimPm $cnsReads $cnsReads"],
+        msg    => "pairwise mapping for trimming",
     );
-
-
-    my $jobAlVol = Job->new(
-        prefunc => sub($) {
-            my ($job) = @_;
-
-            my $count = getFileFirstItem("$volDir/num_volumes.txt", 0);
-
-            for (my $i=0; $i<$count; $i=$i+1) {
-                my $id = $i + 1;
-                my $jobSub = Job->new(
-                    name => "tr_al_vol_$i", 
-                    ifiles => ["$volDir/num_volumes.txt"],
-                    ofiles => ["$volDir/pm_$id.m4"],
-                    gfiles => ["$volDir/pm_$id.m4"],
-                    mfiles => ["$volDir/${id}_*.r"],
-                    cmds => ["$binPath/v2asmpm -P$volDir -T$thread -S$id -E$count $options",
-                            "cat $volDir/${id}_*.r > $volDir/pm_$id.m4"],
-                    msg => "aligning volumn $id for trimming",
-                );
-                
-                push @{$job->pjobs}, $jobSub;
-                push @{$job->ofiles}, "$volDir/pm_$id.m4";
-            }
-        },
-        name => "tr_al_vol",
-        ifiles => ["$volDir/num_volumes.txt"],
-        ofiles => [],   # prefunc
-        mfiles => [],
-        pjobs => [],    # prefunc
-        msg => "aligning volumn for trimming",
-    );
-
-    my $jobCatVol = Job->new (
-        prefunc => sub ($) {
-            my ($job) = @_;
-
-            my $subPmStr = join(" ", @{$jobAlVol->ofiles});
-            $job->ifiles($jobAlVol->ofiles);
-            $job->cmds(["cat $subPmStr  > $trimPm"]);
-
-        },
-        name => "tr_cat_vol",
-        ifiles => [],   # prefunc
-        ofiles => [$trimPm],
-        gfiles => [$trimPm],
-        mfiles => [],
-        cmds => [],     # prefunc
-        msg => "catenating pm for trimming",
-    );
-
 
     my $lcrResult = "$workDir/lcr.txt";
     my $srResult = "$workDir/sr.txt";
 
-    my $jobTrimCore = Job-> new (
-        name => "tr_trim_read",
-        ifiles => [$cnsReads, $trimPm],
-        ofiles => [$trimReads],
-        gfiles => [$trimReads],
+    my $jobPm4 = Job->new (
+        name   => "tr_pm4",
+        ifiles => [],
+        ofiles => [],
+        gfiles => [],
         mfiles => [],
-        cmds => ["$binPath/v2pm4 $volDir $trimPm 0.09 $thread",
-                 "$binPath/v2lcr $trimPm $volDir 0.09 1 1 500 $lcrResult $thread",
-                 "$binPath/v2sr $trimPm $volDir $lcrResult 500 $srResult $thread",
-                 "$binPath/v2tb $cnsReads  $srResult $trimReads"],
-        msg => "trimming reads for trimming",
+        cmds   => ["$binPath/mecat2pm4 $pm4Options -t $thread $volDir $pm4Dir $trimPm"],
+        msg    => "partition m4 records for trimming",        
+    );
+
+    my $jobLcr = Job->new (
+        name   => "tr_lcr",
+        ifiles => [],
+        ofiles => [],
+        gfiles => [],
+        mfiles => [],
+        cmds   => ["$binPath/mecat2lcr $lcrOptions -num_threads $thread -out $lcrResult $volDir $pm4Dir"],
+        msg    => "find largest cover range for trimming",
+    );
+
+    my $jobSr = Job->new (
+        name   => "tr_sr",
+        ifiles => [],
+        ofiles => [],
+        gfiles => [],
+        mfiles => [],
+        cmds   => ["$binPath/mecat2splitreads $srOptions -num_threads $thread -out $srResult $volDir $pm4Dir $lcrResult"],
+        msg    => "find largest clear range for trimming",
+    );
+
+    my $jobTb = Job->new (
+        name   => "tr_tb",
+        ifiles => [],
+        ofiles => [],
+        gfiles => [],
+        mfiles => [],
+        cmds   => ["$binPath/mecat2trimbases $volDir $srResult 1 $trimReads"],
+        msg    => "trim sequences to their largest clear ranges",
     );
 
     my $job = Job->new (
         name => "tr_job",
         ifiles => [$cnsReads],
         ofiles => [$trimReads],
-        mfiles => ["$volDir/trimReads_*.fasta", $volDir],
-        jobs => [$jobMkVol, $jobAlVol, $jobCatVol, $jobTrimCore],
+        mfiles => [],
+        jobs => [$jobPm, $jobPm4, $jobLcr, $jobSr, $jobTb],
         msg => "trimming corrected reads",
     );
     
@@ -255,61 +248,14 @@ sub runAlignTReads($$) {
     my $options = %$cfg{"ASM_OVLP_OPTIONS"};
     my $thread = %$cfg{"THREADS"};
 
-    my $jobMkVol = Job->new(
-        name => "altr_mk_vol",
+    my $jobPm = Job->new (
+        name   => "altr_pm",
         ifiles => [$trimReads],
-        ofiles => ["$volDir/num_volumes.txt"],
-        gfiles => ["$volDir/num_volumes.txt"],
+        ofiles => [],
+        gfiles => [],
         mfiles => [],
-        cmds => ["$binPath/v2mkvol $volDir $trimReads"],
-        msg => "making vol for aligning trimmed reads",
-    );
-
-    my $jobAlVol = Job->new(
-        prefunc => sub($) {
-            my ($job) = @_;
-            my $count = getFileFirstItem("$volDir/num_volumes.txt", 0);
-
-            for (my $i=0; $i<$count; $i=$i+1) {
-                my $id = $i + 1;
-                my $jobSub = Job->new(
-                    name => "altr_al_vol_$i", 
-                    ifiles => ["$volDir/num_volumes.txt"],
-                    ofiles => ["$volDir/pm_$id.m4"],
-                    gfiles => ["$volDir/pm_$id.m4"],
-                    mfiles => ["$volDir/${id}_*.r"],
-                    cmds => ["$binPath/v2asmpm -P$volDir -T$thread -S$id -E$count $options",
-                            "cat $volDir/${id}_*.r > $volDir/pm_$id.m4"],
-                    msg => "aligning volumn $id for assembling",
-                );
-                push @{$job->pjobs}, $jobSub;
-                push @{$job->ofiles}, "$volDir/pm_$id.m4";
-            }
-
-        },
-        name => "altr_al_vol",
-        ifiles => ["$volDir/num_volumes.txt"],
-        ofiles => [],   # prefunc
-        mfiles => [],
-        pjobs => [],     # prefunc
-        msg => "aligning volumn for assembling",
-    );
-
-    my $jobCatVol = Job->new (
-        prefunc => sub ($) {
-            my ($job) = @_;
-            my $subPmStr = join(" ", @{$jobAlVol->ofiles});
-            $job->ifiles($jobAlVol->ofiles);
-            $job->cmds(["cat $subPmStr  > $asmPm"]);
-        },
-
-        name => "altr_cat_vol",
-        ifiles => [],   # prefunc
-        ofiles => [$asmPm],
-        gfiles => [$asmPm],
-        mfiles => [],
-        cmds => [],     #prefunc
-        msg => "catenating pm for assembling",
+        cmds => ["$binPath/mecat2map $options -task pm -num_threads $thread -out $asmPm $trimReads $trimReads"],
+        msg => "pairwise mapping of trimmed reads",
     );
     
     my $job = Job->new (
@@ -317,7 +263,7 @@ sub runAlignTReads($$) {
         ifiles => [$trimReads],
         ofiles => [$asmPm],
         mfiles => [$volDir],
-        jobs => [$jobMkVol, $jobAlVol, $jobCatVol],
+        jobs => [$jobPm],
         msg => "aligning trimmed reads for assembling",
     );
     
@@ -364,17 +310,25 @@ sub statCorrectedReads($$) {
     my ($env, $cfg) = @_;
     my $prjDir = %$env{"WorkPath"} . "/" .%$cfg{"PROJECT"};
  
-    plgdInfo("N50 of corrected reads: $prjDir/1-consensus/cns_final.fasta");
-    my $cmd = %$env{"BinPath"} . "/fsa_rd_stat $prjDir/1-consensus/cns_final.fasta";
+    plgdInfo("Information of corrected reads $prjDir/1-consensus/cns_final.fasta");
+    my $cmd = %$env{"BinPath"} . "/mecat2viewdb $prjDir/1-consensus/cns_final.fasta";
     system($cmd);
+}
 
+sub statTrimmedReads($$) {
+    my ($env, $cfg) = @_;
+    my $prjDir = %$env{"WorkPath"} . "/" .%$cfg{"PROJECT"};
+ 
+    plgdInfo("Information of trimmed reads $prjDir/2-trim_bases/trimReads.fasta");
+    my $cmd = %$env{"BinPath"} . "/mecat2viewdb $prjDir/2-trim_bases/trimReads.fasta";
+    system($cmd);
 }
 
 sub statContigs($$) {
     my ($env, $cfg) = @_;
     my $prjDir = %$env{"WorkPath"} . "/" .%$cfg{"PROJECT"};
  
-    my $cmd = %$env{"BinPath"} . "/fsa_rd_stat $prjDir/4-fsa/contigs.fasta";
+    my $cmd = %$env{"BinPath"} . "/mecat2viewdb $prjDir/4-fsa/contigs.fasta";
     plgdInfo("N50 of contigs: $prjDir/4-fsa/contigs.fasta");
     system($cmd);
 }
@@ -391,6 +345,19 @@ sub cmdCorrect($) {
 
     runCorrectRawreads(\%env, \%cfg);
     statCorrectedReads(\%env, \%cfg);
+}
+
+sub cmdTrim($) {
+    
+    my ($fname) = @_;
+
+    %cfg = loadMecatConfig($fname);
+    %env = loadMecatEnv(\%cfg);
+    initializeMecatProject(\%cfg);
+
+    runCorrectRawreads(\%env, \%cfg);
+    runTrimReads(\%env, \%cfg); 
+    statTrimmedReads(\%env, \%cfg);
 }
 
 sub cmdAssemble($) {
@@ -414,8 +381,9 @@ sub cmdConfig($) {
     my %cfg = defaultConfig();
 
     my @items = ("PROJECT", "RAWREADS", "GENOME_SIZE", "THREADS", "MIN_READ_LENGTH", 
-                 "CNS_OVLP_OPTIONS", "CNS_OPTIONS", "CNS_OUTPUT_COVERAGE", "TRIM_OVLP_OPTIONS", "ASM_OVLP_OPTIONS", 
-                 "FSA_OL_FILTER_OPTIONS", "FSA_ASSEMBLE_OPTIONS" );
+                 "CNS_OVLP_OPTIONS", "CNS_PCAN_OPTIONS", "CNS_OPTIONS", "CNS_OUTPUT_COVERAGE", 
+                 "TRIM_OVLP_OPTIONS", "TRIM_PM4_OPTIONS", "TRIM_LCR_OPTIONS", "TRIM_SR_OPTIONS",
+                 "ASM_OVLP_OPTIONS", "FSA_OL_FILTER_OPTIONS", "FSA_ASSEMBLE_OPTIONS");
 
     open(F, "> $fname") or die; 
     foreach my $k (@items) {
@@ -440,6 +408,7 @@ sub cmdConfig($) {
 sub usage() {
     print "Usage: mecat.pl correct|assemble|config cfg_fname\n".
           "    correct:     correct rawreads\n" .
+          "    trim:        trim corrected reads\n" .
           "    assemble:    generate contigs\n" .
           "    config:      generate default config file\n"
 }
@@ -451,6 +420,8 @@ sub main() {
 
         if ($cmd eq "correct") {
             cmdCorrect($cfgfname);
+        } elsif ($cmd eq "trim") {
+            cmdTrim($cfgfname);
         } elsif ($cmd eq "assemble") {
             cmdAssemble($cfgfname);
         } elsif ($cmd eq "config") {

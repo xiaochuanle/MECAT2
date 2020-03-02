@@ -44,11 +44,11 @@ ${HDF5_LIB}: ${HDF5_TAR_GZ}
 	tar -xzf ${BUILD_TOP_DIR}/hdf5-$(HDF5_VERSION).tar.gz -C ${BUILD_TOP_DIR} || exit 255
 	cd ${BUILD_TOP_DIR}/hdf5-$(HDF5_VERSION) && \
 		./configure --enable-threadsafe --disable-hl --libdir=`pwd`/../hdf5/lib --includedir=`pwd`/../hdf5/include --prefix=`pwd`/../hdf5 && \
-		make ${MAKEFLAGS} && make install
+		make -j ${MAKEFLAGS} && make install
 
 ${HDF5_TAR_GZ}:
 	mkdir -p ${BUILD_DIR}		
 	version_major_minor=`echo "$(HDF5_VERSION)" | sed -E 's/\.[0-9]+$$//'`; \
-	wget -P ${BUILD_TOP_DIR} https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-$${version_major_minor}/hdf5-$(HDF5_VERSION)/src/hdf5-$(HDF5_VERSION).tar.gz; \
+	cp third_party/hdf5-1.10.4.tar.gz ${BUILD_TOP_DIR}/
 	
 

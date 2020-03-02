@@ -1,5 +1,7 @@
 # </a>Contents
 
+* [Updates in 2020.02.28](#S-what_is_new)
+
 * [Introduction](#S-introduction)
 
 * [Installation](#S-installation)
@@ -16,23 +18,24 @@
 
 * [Update Information](#S-update)
 
+## <a name="S-what_is_new"></a> Updates of 2020.02.28
+
+* Removed hard limit on maximum sequence length.  The hard limit always causes segmentation fault when performing ultra long sequence alignments.
+
+* Merge `mecat2pw` and `mecat2ref` into one single mapping tool `mecat2map`. `mecat2map` uses much less memory compared to `mecat2pw`.
+
+* The candidate partition process now supports multiple CPU threads.
+
+* Support multiple input forms (see [Input Format](#S-input-format)). 
+
 # <a name="S-introduction"></a>Introduction
 
-MECAT2 is an improved version of  [MECAT](https://github.com/xiaochuanle/MECAT). It is an ultra-fast and accurate Mapping, Error Correction and de novo Assembly Tools for single molecula sequencing (SMRT) reads. MECAT2 powers following improvements over MECAT:
-
-* All modules in MECAT2 are developed by ourselves for easy maintenance.
-* MECAT2 can be parallel to multiple nodes.
-* Many bugs in MECAT have been fixed.
-* To improve the mapping  efficiency, the default length of kmers is set to 15 (13 in MECAT).
-* The default parameters in `mecat2cns` are relexed so that MECAT2 also works well for low coverage datasets.
-* A new assembly module `fsa`, which is based on [string graph](https://academic.oup.com/bioinformatics/article/21/suppl_2/ii79/227189), is used for replacing the original assembly tool `mecat2canu`.
+MECAT2 is an improved version of  [MECAT](https://github.com/xiaochuanle/MECAT). It is an ultra-fast and accurate Mapping, Error Correction and de novo Assembly Tools for single molecula sequencing (SMRT) reads.
 
 
-MECAT2 consists of four modules:
+MECAT2 consists of three modules:
 
-* `mecat2pw`, a fast and accurate pairwise mapping tool for SMRT reads
-
-* `mecat2ref`, a fast and accurate reference mapping tool for SMRT reads
+* `mecat2map`, a fast and accurate alignment tool for SMRT reads
 
 * `mecat2cns`, correct noisy reads based on their pairwise overlaps
 
@@ -51,14 +54,13 @@ We have tested `MECAT2` on CentOS release 7.3 and on Ubuntu 18.04.
 
 * Step 1: Figure out where to install `MECAT2`.
 We will install `MECAT2` and two other auxiliary tools `HDF5` and `dextract`. We first identify the directory in which we want to install them. As an example, I will install them in the directory `/home/chenying/smrt_asm`. So I first create this directory using the `mkdir` command and go to that directory:
-(**The dollar sign `$` that preceeds the input is the promt that printed by the shell.**)
+(**The dollar sign `$` that preceeds the input is the promt printed by the shell.**)
 ``` shell
 $ mkdir -p /home/chenying/smrt_asm
 $ cd /home/chenying/smrt_asm
 $ pwd
 /home/chenying/smrt_asm
 ```
-
 For easy reference, we asign `/home/chenying/smrt_asm` to an environment variable `MECAT_PATH`:
 ``` shell
 $ export MECAT_PATH=/home/chenying/smrt_asm
@@ -67,13 +69,6 @@ $ echo ${MECAT_PATH}
 ```
 
 * Step 2:  Install `MECAT2`:
-
-There are two ways to install `MECAT2`. One is to download executable binaries directly:
-```shell
-$ wget https://github.com/xiaochuanle/MECAT2/releases/download/20192026/mecat2_20190226_linuax_amd64.tar.gz
-$ tar xzvf mecat2_20190226_linuax_amd64.tar.gz
-```
-Another way is to build from source codes:
 ``` shell
 $ git clone https://github.com/xiaochuanle/MECAT2.git
 $ cd MECAT2
@@ -96,83 +91,88 @@ $ export PATH=${MECAT_PATH}/MECAT/Linux-amd64/bin:$PATH
 Here we take assemblying the genome of Ecoli as an example, to go through each step in order.  Details of each step are given in the next section.
 
 * Step 1: Download dataset.
-
-We download the raw reads  [ecoli_filtered.fastq.gz](http://gembox.cbcb.umd.edu/mhap/raw/ecoli_filtered.fastq.gz) into directory `${MECAT_PATH}/ecoli` and decompress it:
-
+We download the raw reads  [ecoli_filtered.fastq.gz](http://gembox.cbcb.umd.edu/mhap/raw/ecoli_filtered.fastq.gz) into directory `${MECAT_PATH}/ecoli`
 ``` shell
 $ mkdir -p ${MECAT_PATH}/ecoli
 $ cd ${MECAT_PATH}/ecoli
 $ wget http://gembox.cbcb.umd.edu/mhap/raw/ecoli_filtered.fastq.gz
-$ gunzip ecoli_filtered.fastq.gz
 ```
-After decompression, we get raw read file `${MECAT_PATH}/ecoli/ecoli_filtered.fastq`:
+After that, we get raw read file `${MECAT_PATH}/ecoli/ecoli_filtered.fastq.gz`:
 ``` shell
 $ ls
-ecoli_filtered.fastq
+ecoli_filtered.fastq.gz
 ```
 
 * Step 2: Prepare config file
-
 We create a config file template using the following command:
 ``` shell
 $ mecat.pl config ecoli_config_file.txt
 ```
-The above command creates a config file `ecoli_config_file.txt`, which looks like
+This command creates a config file `ecoli_config_file.txt`, which looks like
 ``` shell
 PROJECT=
 RAWREADS=
 GENOME_SIZE=
 THREADS=4
-MIN_READ_LENGTH=500
-CNS_OVLP_OPTIONS=""
-CNS_OPTIONS="-r 0.6 -a 1000 -c 4 -l 2000"
-TRIM_OVLP_OPTIONS="-B"
-ASM_OVLP_OPTIONS="-n 100 -z 10 -b 2000 -e 0.5 -j 1 -u 0 -a 400"
+MIN_READ_LENGTH=2000
+CNS_OVLP_OPTIONS="-kmer_size 13"
+CNS_PCAN_OPTIONS="-p 100000 -k 100"
+CNS_OPTIONS=""
+CNS_OUTPUT_COVERAGE=30
+TRIM_OVLP_OPTIONS="-skip_overhang"
+TRIM_PM4_OPTIONS="-p 100000 -k 100"
+TRIM_LCR_OPTIONS=""
+TRIM_SR_OPTIONS=""
+ASM_OVLP_OPTIONS=""
 FSA_OL_FILTER_OPTIONS="--max_overhang=-1 --min_identity=-1"
 FSA_ASSEMBLE_OPTIONS=""
-USE_GRID=false
 CLEANUP=0
-CNS_OUTPUT_COVERAGE=30
-GRID_NODE=0
 ```
 After filling the relative information, we have
-
 ``` shell
 PROJECT=ecoli
 RAWREADS=/home/chenying/smrt_asm/ecoli/ecoli_filtered.fastq
 GENOME_SIZE=4800000
 THREADS=4
 MIN_READ_LENGTH=2000
-CNS_OVLP_OPTIONS=""
-CNS_OPTIONS="-r 0.6 -a 1000 -c 4 -l 2000"
-TRIM_OVLP_OPTIONS="-B"
-ASM_OVLP_OPTIONS="-n 100 -z 10 -b 2000 -e 0.5 -j 1 -u 0 -a 400"
+CNS_OVLP_OPTIONS="-kmer_size 13"
+CNS_PCAN_OPTIONS="-p 100000 -k 100"
+CNS_OPTIONS=""
+CNS_OUTPUT_COVERAGE=30
+TRIM_OVLP_OPTIONS="-skip_overhang"
+TRIM_PM4_OPTIONS="-p 100000 -k 100"
+TRIM_LCR_OPTIONS=""
+TRIM_SR_OPTIONS=""
+ASM_OVLP_OPTIONS=""
 FSA_OL_FILTER_OPTIONS="--max_overhang=-1 --min_identity=-1"
 FSA_ASSEMBLE_OPTIONS=""
-USE_GRID=false
 CLEANUP=0
-CNS_OUTPUT_COVERAGE=30
-GRID_NODE=0
 ```
 
 * Step 3: Correct Raw Reads.
-
 Correct the raw noisy reads using the following command:
-
 ``` shell
 $ mecat.pl correct ecoli_config_file.txt
 ```
 
-* Step 4: Assemble Contigs Using the Corrected Reads
+* Step 4: Trim Out Low Quality Subsequences in Corrected Reads.
+``` shell
+$ mecat.pl trim ecoli_config_file.txt
+```
 
+* Step 5: Assemble Contigs Using the Trimeed Reads
 ``` shell
 $ mecat.pl assemble ecoli_config_file.txt
 ```
 
-* Step 5: Where to Find Results
+* Step 6: Where to Find Results
 
-	* The corrected reads is `${MECAT_PATH}/ecoli/ecoli/1-consensus/cns_reads.fasta`.
-	* The extracted longest 30x corrected reads used for trimming is `${MECAT_PATH}/ecoli/ecoli/1-consensus/cns_final.fasta`.
+	* The file `${MECAT_PATH}/eocli/ecoli/1-consensus/cns_reads_list.txt` contains the full path of all corrected reads files.
+	``` shell
+    $ cat ${MECAT_PATH}/eocli/ecoli/1-consensus//cns_reads_list.txt
+    /home/chenying/smrt_asm/ecoli/ecoli/1-consensus/cns_cns_dir/p00000000.cns.fasta
+    ```
+	* The extracted longest 30x (The number 30 is indidated by the `CNS_OUTPUT_COVERAGE` option in the config file) corrected reads used for trimming is `${MECAT_PATH}/ecoli/ecoli/1-consensus/cns_final.fasta`.
 	* The trimmed reads is `${MECAT_PATH}/ecoli/ecoli/2-trim_bases/trimReads.fasta`
 	* The assembled contigs is `${MECAT_PATH}/ecoli/ecoli/4-fsa/contigs.fasta`
 
@@ -180,11 +180,48 @@ $ mecat.pl assemble ecoli_config_file.txt
 
 # <a name="S-input-format"></a>Input Format
 
-`MECAT2` is capable of processing `FASTA`, `FASTQ`, and `H5` format files. However, the `H5` files must first be transfered to `FASTA` format by running `${MECAT_PATH}/DEXTRACT/dextract` before running `MECAT2`. For example:
+The input to `MECAT2` is indicated by the `RAWREADS` option in the config file. It must be a **full path**. `MECAT2` supports several different input formats:
+
+* `H5` format. `H5` file format must first be transfered to `FASTA` format with `${MECAT_PATH}/DEXTRACT/dextract`. For example:
 ```shell
 $ find pathto/raw_reads -name "*.bax.h5" -exec readlink -f {} \; > reads.fofn
 $ while read line; do   dextract -v $line >> reads.fasta ; done <  reads.fofn
 ```
+After transformation, proceed to one of the following input case.
+
+* `FASTA` format.
+```shell
+RAWREADS=/Users/sysu/Desktop/files/programs/ecoli/pacbio/ecoli/raw_reads.fasta
+```
+Or `FASTA` format compressed in [GNU Zip (gzip) format](https://www.gnu.org/software/gzip/manual/gzip.html)
+```shell
+RAWREADS=/Users/sysu/Desktop/files/programs/ecoli/pacbio/ecoli/raw_reads.fasta.gz
+```
+
+* `FASTQ` format
+```shell
+RAWREADS=/Users/sysu/Desktop/files/programs/ecoli/pacbio/ecoli/raw_reads.fastq
+```
+Or `FASTQ` format compressed in [GNU Zip (gzip) format](https://www.gnu.org/software/gzip/manual/gzip.html)
+```shell
+RAWREADS=/Users/sysu/Desktop/files/programs/ecoli/pacbio/ecoli/raw_reads.fastq.gz
+```
+
+* List format
+A file indicates the **full paths** of all raw reads files.
+``` shell
+RAWREADS=/Users/sysu/Desktop/files/programs/tomato/read_list.txt
+```
+``` shell
+$ cat /Users/sysu/Desktop/files/programs/tomato/read_list.txt
+/share/home/chuanlex/xiaochuanle/data/testdata/tomato/20161027_Spenn_001_001_all.fastq
+/share/home/chuanlex/xiaochuanle/data/testdata/tomato/20161101_Spenn_002_002_all.fastq
+/share/home/chuanlex/xiaochuanle/data/testdata/tomato/20161103_Spenn_003_003_all.fastq
+/share/home/chuanlex/xiaochuanle/data/testdata/tomato/20161108_Spenn_004_004_all.fastq
+/share/home/chuanlex/xiaochuanle/data/testdata/tomato/20161108_Spenn_004_005_all.fastq
+```
+Please note that files in `read_list.txt` need not be the same format. Each file can independently be either `FASTA` or `FASTQ`, and can further be compressed in  [GNU Zip (gzip) format](https://www.gnu.org/software/gzip/manual/gzip.html).
+
 
 
 # <a name="S-program-description"></a>Program Descriptions
@@ -209,21 +246,23 @@ RAWREADS=/home/chenying/smrt_asm/ecoli/ecoli_filtered.fastq
 GENOME_SIZE=4800000
 THREADS=4
 MIN_READ_LENGTH=2000
-CNS_OVLP_OPTIONS=""
-CNS_OPTIONS="-r 0.6 -a 1000 -c 4 -l 2000"
-TRIM_OVLP_OPTIONS="-B"
-ASM_OVLP_OPTIONS="-n 100 -z 10 -b 2000 -e 0.5 -j 1 -u 0 -a 400"
+CNS_OVLP_OPTIONS="-kmer_size 13"
+CNS_PCAN_OPTIONS="-p 100000 -k 100"
+CNS_OPTIONS=""
+CNS_OUTPUT_COVERAGE=30
+TRIM_OVLP_OPTIONS="-skip_overhang"
+TRIM_PM4_OPTIONS="-p 100000 -k 100"
+TRIM_LCR_OPTIONS=""
+TRIM_SR_OPTIONS=""
+ASM_OVLP_OPTIONS=""
 FSA_OL_FILTER_OPTIONS="--max_overhang=-1 --min_identity=-1"
 FSA_ASSEMBLE_OPTIONS=""
-USE_GRID=false
 CLEANUP=0
-CNS_OUTPUT_COVERAGE=30
-GRID_NODE=0
 ```
 The meaning of each option is given below
 
 * `PROJECT=ecoli`, the name of the project. In this example, a directory `ecoli` will be created in the current directory, and then everything will take place in the directory `ecoli`.
-* `RAWREADS=`, the raw reads (with full path) to be processed by `MECAT2`. Raw reads must be either FASTA or FASTQ format. The H5 format file must be transferred to FASTA format first (see [Input Format](#S-input-format)).
+* `RAWREADS=`, the raw reads (with full path) to be processed by `MECAT2`. See [Input Format](#S-input-format).
 * `GENOME_SIZE=`, the size (in bp) of the underlying genome.
 * `THREADS=`, number of CPU threads used  by `MECAT2`.
 * `MIN_READ_LENGTH=`, minimal length of corrected reads and trimmed reads.
@@ -236,30 +275,30 @@ The meaning of each option is given below
 * `USE_GRID=false`, using multiple computing nodes (`true`) or not (`false`).
 * `CLEANUP=0`, delete intermediate date genrated by `MECAT2` (`1`) or not (`0`). Please note the in assemblying large genomes, the intermediate data can be very large.
 * `CNS_OUTPUT_COVERAGE=30`, number of coverage of the longest corrected reads are extracted to be trimed and then assembled. In this example, 30x (specifically, 30 * 4800000 = 144 MB) of the longest corrected reads will be extracted.
-* `GRID_NODE=0`, number of computing nodes used. This options is used only when `USE_GRID=1`.
 
 ## <a name="SS-mecat2-workflow"></a> The `MECAT2` Workflow.
 
 For easy use, we have integrated all the procedures into one perl script file `mecat.pl`, which works in the following steps:
 
 > `meat.pl config`, as mentioned above, this command creates a config file.
-> `mecat.pl correct`, correct raw reads, which consits of two steps:
->> detecting overlap candidates using `mecat2pw`.
+> `mecat.pl correct`, correct raw reads, which consits of three steps:
+>> detecting overlap candidates using `mecat2map`.
+>>  partition overlap candidates into several parts using `mecat2pcan`. Each parts contains overlap candidates needed for correcting 100000 raw reads.
 >>  correct raw reads based on overlap candidates using `mecat2cns`.
 
 > `mecat.pl assemble`, assemble corrected reads in three steps:
->> extract 30x longest corrected reads
->> trim out low quality subsequences using `v2trim.sh` in two stpes:
->>> detecting overlaps of extracted reads using `v2asmpm.sh`
->>> trim out low quality subsequence based on their overlaps using `v2lcr` and `v2sr`.
+>> extract 30x longest corrected reads with `mecat2extseqs`
+>> trim out low quality subsequences in two stpes:
+>>> detecting overlaps of extracted reads using `mecat2map`
+>>> trim out low quality subsequence based on their overlaps using `mecat2lcr`, `mecat2splitreads` and `mecat2trimbases`.
 
 >> assemble trimmed reads into contigs in three steps:
->>> detecting overlaps of trimmed reads using `v2asmpm.sh`
+>>> detecting overlaps of trimmed reads using `mecat2map`
 >>> filter out low quality overlaps using `fsa_ol_filter`
 >>> assemble trimmed reads into contigs based on high quality overlaps using `fsa_assemble`
 
 
-## <a name="SS-pairwise-mapping"></a> Pairwise Mapping Tool `mecat2pw`
+## <a name="SS-pairwise-mapping"></a> SMRT sequence alignment tool `mecat2map`
 
 
 
@@ -268,244 +307,11 @@ For easy use, we have integrated all the procedures into one perl script file `m
 The command for running `mecat2pw` is
 
 ```shell
-mecat2pw -j [task] -d [fasta/fastq] -w [working folder] -t [# of threads] -o [output] -n [# of candidates] -a [overlap size] -k [# of kmers] -g [0/1]
+mecat2map [OPTIONS] reads reference > results.m4
 ```
-
-The options are:
-
-* `-j [task]`, job name, 0 = detect overlapping candidates only, 1 = output overlaps in M4 format, default = 1. If we are to correct noisy reads, outputing overlapping candidates is enough.
-
-* `-d [fasta/fastq]`, reads file name in FASTA or FASTQ format.
-
-* `-w [working folder]`, a directory for storing temporary results, will be created if not exists.
-
-* `-t [# of threads]`, number of CPU threads used for overlapping, default=1.
-
-* `-o [output]`, output file name
-
-* `-n [# of candidates]`, number of candidates considered for gapped extension, default=100. Since each chunk  is about 2GB size, number of candidates(NC) should be set by genome size (GS).For GS < 20M, NC should be set as 200; For GS>20M and GS<200M; NC should be set as 100; For GS>200M, NC should be set as 50.
-
-* `-a [overlap size]`, only output overlaps with length >= a. Default: 2000.
-
-* `-k [# of kmers]`, two blocks between two reads having >= k kmer matches will be considered as a matched block pair. Default: 4.
-
-* `-g [0/1]`, output the gapped extension start point (1) or not (0), default=0.
-
-
-### </a>output format
-
-
-
-If the job is detecting overlapping candidates, the results are output in `can` format, each result of which occupies one line and 9 fields:
-
-```shell
-
-[A ID] [B ID] [A strand] [B strand] [A gapped start] [B gapped start] [voting score] [A length] [B length]
-
-```
-
-
-
-`mecat2pw` outputs overlapping results in `M4` format, of which one result is given in one line. The fileds of `M4` format is given in order below:
-
-```shell
-
-[A ID] [B ID] [% identity] [voting score] [A strand] [A start] [A end] [A length] [B strand] [B start] [B end] [B length]
-
-```
-
-If the `-g` option is set to `1`, two more fields indicating the extension starting points are given:
-
-```shell
-
-[A ID] [B ID] [% identity] [voting score] [A strand] [A start] [A end] [A length] [B strand] [B start] [B end] [B length] [A ext start] [B ext start]
-
-```
-
-In the `strand` field, `0` stands for the forward strand and `1` stands for the reverse strand. All the positions are zero-based and are based on the forward strand, whatever which strand the sequence is mapped. Here are some examples:
-
-```shell
-
-44 500 83.6617 30 0 349 8616 24525 0 1 10081 21813
-
-353 500 83.2585 28 0 10273 18410 22390 1 0 10025 21813
-
-271 500 80.4192 13 0 14308 19585 22770 1 4547 10281 21813
-
-327 501 89.8652 117 0 10002 22529 22529 1 9403 21810 21811
-
-328 501 90.8777 93 0 0 10945 22521 1 0 10902 21811
-
-```
-
-In the examples above, read 500 overlaps with reads 44, 353, 271, 327 and 328.
-
-
-
-### </a> memory consumption
-
-
-
-Before overlapping is conducted, the reads will be split into several chunks. Each chunk is about 2GB in size so that the overlapping can be run on a 8GB RAM computer.
-
-
-
-## <a name="SS-reference-mapping"></a> Reference Mapping Tool `mecat2ref`
-
-
-
-### </a>options
-
-
-
-`mecat2ref` is used for mapping SMRT reads to the reference genomes. The command  is
-
-```shell
-
-mecat2ref -d [reads] -r [reference] -w [folder] -t [# of threads] -o [output] -b [# of results] -m [output format]
-
-```
-
-The meanings of each option are as follows:
-
-* `-d [reads]`, reads file name in FASTA/FASTQ format
-
-* `-r [reference]`, reference genome file name in FASTA format
-
-* `-w [folder]`, a directory for storing temporary results
-
-* `-t [# of threads]`, number of working CPU threads
-
-* `-o [output]`, output file name
-
-* `-b [# of result]`, output the best b alignments
-
-* `-m [output format]`, output format: 0 = ref, 1 = M4, 2 = SAM, default = 0
-
-
-### </a>output format
-
-
-
-`mecat2ref` outputs results in one of the three formats: the `ref` format, the `M4` format, and the `SAM` format.
-
-
-
-For the `ref` format, each result occupies three lines in the form:
-
-```shell
-
-[read name] [ref name] [ref strand] [voting score] [read start] [read end] [read length] [ref start] [ref end]
-
-mapped read subsequence
-
-mapped reference subsequence
-
-```
-
-The strands of the reads are always forward. In the `[ref strand]` field, `F` indicates forward strand while `R` indicates reverse strand. All the positions are zero-based and relative to the forward strand. Here is an example:
-
-```shell
-
-1	gi|556503834|ref|NC_000913.3|	F	10	2	58	1988134	1988197
-
-AAT-AGCGCCTGCCAGGCG-TCTTTT--CCGGCCATTGT-CGCAG--CACTGTAACGCGTAAAA
-
-AATTAGCGCCTGCCAGGCGGTCTTTTTTCCGGCCATTGTTCGCAGGG-ACTGTAACGCGTAAAA
-
-```
-
-In this example, read 1 is mapped to the reference `gi|556503834|ref|NC_000913.3|`.
-
-
-
-### </a>memory consumption
-
-
-
-* Index for the genome: genomeSize * 8 bytes
-
-* Compressed index for each CPU thread: genomeSize \* 0.1 * t bytes
-
-* Local alignment: 100M * t + 1G bytes
-
 
 
 ## <a name="SS-consensus"></a> Correction Tool `mecat2cns`
-
-
-
-`mecat2cns` is an adaptive error correction tool for high-noise single-molecula sequencing reads. It is as accurate as [pbdagcon](https://github.com/PacificBiosciences/pbdagcon.git) and as fast as FalconSense. Inputs to `mecat2cns` can be either `can` format or `M4` format. The command for running `mecat2cns` is
-
-```shell
-
-mecat2cns [options] overlaps-file reads output
-
-```
-
-The options are
-
-* `-i [input type]`, input format, 0 = `can`, 1 = `M4`
-
-* `-t [# of threads]`, number of CPU threads for consensus
-
-* `-p [batch size]`, batch size the reads will be partitioned
-
-* `-r [ratio]`, minimum mapping ratio
-
-* `-a [overlap size]`, overlaps with length >= a will be used.
-
-* `-c [coverage]`, minimum coverage, default=6
-
-* `-l [length]`, minimum length of the corrected sequence
-
-The default values for the other options are:
-```shell
--i 1 -t 1 -p 100000 -r 0.6 -a 1000 -c 4 -l 2000
-```
-
-
-If the inputs are `M4` format, the overlap results in `[overlaps-file]` must contain the gapped extension start point, which means the option `-g` in `mecat2pw` must be set to 1, otherwise `mecat2cns` will fail to run. Also note that the memory requirement of `mecat2cns` is about 1/4 of the total size of the reads. For example, if the reads are of total size 1GB, then `mecat2cns` will occupy about 250MB memory.
-
-
-
-### </a> output format
-
-
-
-The corrected sequences are given in FASTA format. The header of each corrected sequence consists of three components seperated by underlines:
-
-```shell
-
->A_B_C_D
-
-```
-
-where
-
-* `A` is the original read id
-
-* `B` is the left-most effective position
-
-* `C` is the right-most effective position
-
-* `D` is the length of the corrected sequence
-
-
-
-by effective position we mean the position in the original sequence that is covered by at least `c` (the argument to the option `-c`) reads.
-
-## <a name="SS-Extract longest correted reads"></a> `mecat2elr`
-
-
-
-`mecat2elr` is used by `mecat.pl` for  extracting 30X longest sequences from the corrected data. The command is
-
-``` shell
-
-mecat2elr [the input fasta file from mecat2cns] [genome size]  [coverage] [the output filename]
-
-```
 
 ## <a name="SS_fsa_ov_filter"></a> Overlap Filter `fsa_ol_filter`
 `fsa_ol_filter` is used for filtering out low-quality overlaps. The usage of `fsa_ol_filter1` is
@@ -518,7 +324,7 @@ The options are
 
 * `--min_length=INT`, minimum length of reads (default: 2500)
 * `--max_length=INT`, maximum length of reads (defualt: INT_MAX).
-* `--min_identity=DOUBLE`, minimum identity of overlaps (defualt: 90).  
+* `--min_identity=DOUBLE`, minimum identity of overlaps (defualt: 90).
 * `--min_aligned_length=INT`, minimum aligned length of overlaps (default: 2500). 
 * `--max_overhang=INT`, maximum overhang of overlaps (default: 10), negative number = determined by the program.
 * `--min_coverage=INT`, minimum base coverage (default: -1), negative number = determined by the program.

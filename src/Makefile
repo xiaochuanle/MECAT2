@@ -367,14 +367,20 @@ ${info Building for '${OSTYPE}' '${OSVERSION}' as '${MACHINETYPE}'}
 #${info Using LD_RUN_PATH '${LD_RUN_PATH}'}
 
 ifeq ($(BUILDDEBUG), 1)
-	CXXFLAGS = -D_GLIBCXX_PARALLEL -pthread -O0 -Wall -g -fopenmp
-	CFLAGS = -D_GLIBCXX_PARALLEL -pthread -O0 -Wall -g -fopenmp -std=gnu99
+	CXXFLAGS = -D_GLIBCXX_PARALLEL -pthread -O0 -Wall -g -std=c++11
+	CFLAGS = -D_GLIBCXX_PARALLEL -pthread -O0 -Wall -g -std=gnu99
 else
-	CXXFLAGS = -D_GLIBCXX_PARALLEL -pthread -O3 -Wall 
-	CFLAGS = -D_GLIBCXX_PARALLEL -pthread -O3 -Wall -std=gnu99
+	CXXFLAGS = -D_GLIBCXX_PARALLEL -pthread -O3 -Wall -std=c++11 -DNDEBUG
+	CFLAGS = -D_GLIBCXX_PARALLEL -pthread -O3 -Wall -std=gnu99 -DNDEBUG
 endif
 
-LDFLAGS = -pthread -lm -fopenmp -lz -lstdc++
+LDFLAGS = -pthread -lm -lz -lstdc++
+
+ifeq ($(OSTYPE), Linux)
+	CXXFLAGS := $(CXXFLAGS) -fopenmp
+	CFLAGS := $(CFLAGS) -fopenmp
+	LDFLAGS := $(LDFLAGS) -fopenmp
+endif
 
 
 # Include the main user-supplied submakefile. This also recursively includes
