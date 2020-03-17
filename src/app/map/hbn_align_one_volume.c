@@ -194,6 +194,7 @@ dump_m4_hits(const text_t* query_vol,
             }
         }
     }
+    ks_destroy(line);
 }
 
 static void

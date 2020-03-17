@@ -37,9 +37,10 @@ dump_one_volume(CSeqDB* vol, ClippedRange* sr_range, FILE* out, int* id)
     kv_dinit(vec_u8, seq);
     for (int i = 0; i < vol->dbinfo.num_seqs; ++i) {
         int gid = i + vol->dbinfo.seq_start_id;
-        if (sr_range[gid].size == 0) continue;
-        hbn_assert(sr_range[gid].size == vol->seq_info_list[i].seq_size);
-        seqdb_extract_subsequence(vol, i, sr_range[i].left, sr_range[i].right, FWD, &seq);
+        ClippedRange sr = sr_range[gid];
+        if (sr.size == 0) continue;
+        hbn_assert(sr.size == seqdb_seq_size(vol, i));
+        seqdb_extract_subsequence(vol, i, sr.left, sr.right, FWD, &seq);
         for (size_t p = 0; p < kv_size(seq); ++p) {
             u8 c = kv_A(seq, p);
             kv_A(seq, p) = DECODE_RESIDUE(c);
@@ -47,23 +48,24 @@ dump_one_volume(CSeqDB* vol, ClippedRange* sr_range, FILE* out, int* id)
         if (id == NULL) {
             fprintf(out, ">%s [From:To:OrgSeqSize:TrimSeqSize] = [%d:%d:%d:%d]\n",
                 seqdb_seq_name(vol, i),
-                sr_range[i].left,
-                sr_range[i].right,
-                sr_range[i].size,
-                sr_range[i].right - sr_range[i].left);
+                sr.left,
+                sr.right,
+                sr.size,
+                sr.right - sr.left);
         } else {
-            fprintf(out, ">%d %s [From:To:OrgSeqSize:TrimSeqSize] = [%d:%d:%d:%d]\n",
+            fprintf(out, ">%d %s [From:To:OrgSeqSize:TrimSeqSize] = [%d, %d, %d, %d]\n",
                 *id,
                 seqdb_seq_name(vol, i),
-                sr_range[i].left,
-                sr_range[i].right,
-                sr_range[i].size,
-                sr_range[i].right - sr_range[i].left);
+                sr.left,
+                sr.right,
+                sr.size,
+                sr.right - sr.left);
             ++(*id);
         }
         hbn_fwrite(kv_data(seq), 1, kv_size(seq), out);
         fprintf(out, "\n");
     }
+    kv_destroy(seq);
 }
 
 int main(int argc, char* argv[])
