@@ -254,7 +254,7 @@ sub runAlignTReads($$) {
         ofiles => [],
         gfiles => [],
         mfiles => [],
-        cmds => ["$binPath/mecat2map $options -task pm -num_threads $thread -out $asmPm $trimReads $trimReads"],
+        cmds => ["$binPath/mecat2map $options -task pm -num_threads $thread -db_dir $volDir -out $asmPm $trimReads $trimReads"],
         msg => "pairwise mapping of trimmed reads",
     );
     
