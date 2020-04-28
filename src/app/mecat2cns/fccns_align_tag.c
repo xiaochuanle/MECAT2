@@ -39,6 +39,8 @@ make_align_tags_from_ovlp(const char* qaln,
     char p_q_base = GAP_CHAR;
 
     for (size_t p = 0; p < aln_size; ++p) {
+        if (qaln[p] == GAP_CHAR && taln[p] == GAP_CHAR) continue;
+
         if (qaln[p] != GAP_CHAR) {
             ++i;
             ++jj;

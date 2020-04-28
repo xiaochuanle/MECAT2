@@ -266,12 +266,12 @@ The meaning of each option is given below
 * `GENOME_SIZE=`, the size (in bp) of the underlying genome.
 * `THREADS=`, number of CPU threads used  by `MECAT2`.
 * `MIN_READ_LENGTH=`, minimal length of corrected reads and trimmed reads.
-* `CNS_OVLP_OPTIONS=""`, options for detecting overlap candidates in the correction stage.
-* `CNS_OPTIONS=""`, options for correcting raw reads.
-* `TRIM_OVLP_OPTIONS=""`, options for detecting overlaps in the trimming stage.
-* `ASM_OVLP_OPTIONS=""`, options for detecting overlaps in the assemble stage.
-* `FSA_OL_FILTER_OPTIONS=""`, options for filtering overlaps.
-* `FSA_ASSEMBLE_OPTIONS=""`, options for assembling trimmed reads.
+* `CNS_OVLP_OPTIONS=""`, options for detecting overlap candidates in the correction stage. Run `mecat2map -help` for details. Note that the output format is `seqidx` (`-outfmt seqidx`), which is set internally by `mecat.pl`. 
+* `CNS_OPTIONS=""`, options for correcting raw reads. Run `mecat2cns -help` for details.
+* `TRIM_OVLP_OPTIONS=""`, options for detecting overlaps in the trimming stage. Run `mecat2map` for details. Note that output format is `m4x` (`-outfmt m4x`), which is set internally by `mecat.pl`.
+* `ASM_OVLP_OPTIONS=""`, options for detecting overlaps in the assemble stage. Run `mecat2map -help` for details. The output format is `m4` (`-outfmt m4`), which is set internally by `mecat.pl`.
+* `FSA_OL_FILTER_OPTIONS=""`, options for filtering overlaps. See below for details.
+* `FSA_ASSEMBLE_OPTIONS=""`, options for assembling trimmed reads. See below for details.
 * `USE_GRID=false`, using multiple computing nodes (`true`) or not (`false`).
 * `CLEANUP=0`, delete intermediate date genrated by `MECAT2` (`1`) or not (`0`). Please note the in assemblying large genomes, the intermediate data can be very large.
 * `CNS_OUTPUT_COVERAGE=30`, number of coverage of the longest corrected reads are extracted to be trimed and then assembled. In this example, 30x (specifically, 30 * 4800000 = 144 MB) of the longest corrected reads will be extracted.
